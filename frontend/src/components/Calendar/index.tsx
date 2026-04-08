@@ -10,12 +10,15 @@ const SHAPE_EMOJI: Record<ShapeType, string> = {
   splash_zone:    '🟢',
 }
 
+const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+
 export function Calendar() {
   const today = new Date()
   const year = today.getFullYear()
   const month = today.getMonth()
+  const todayDate = today.getDate()
 
-  const days = useMemo(() => {
+  const { daysInMonth, firstDayOfWeek, dayMap } = useMemo(() => {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const firstDayOfWeek = new Date(year, month, 1).getDay()
     const monthStart = new Date(year, month, 1).getTime()
@@ -23,44 +26,61 @@ export function Calendar() {
     const entries = logService.getEntriesInRange(monthStart, monthEnd)
 
     const dayMap: Record<number, ShapeType> = {}
-    for (const entry of entries) {
-      const d = new Date(entry.timestamp).getDate()
-      if (!dayMap[d]) dayMap[d] = entry.shape
+    for (const e of entries) {
+      const d = new Date(e.timestamp).getDate()
+      if (!dayMap[d]) dayMap[d] = e.shape
     }
-
     return { daysInMonth, firstDayOfWeek, dayMap }
   }, [year, month])
 
-  const todayDate = today.getDate()
+  const monthLabel = `${year}年${month + 1}月`
 
   return (
     <div className="px-5 pb-8">
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-[#898989] font-medium mb-2">
-        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-          <div key={d}>{d}</div>
+      {/* Month header */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="font-black text-[#272727] text-base">{monthLabel}</p>
+        <p className="text-xs text-[#aaa] font-medium">
+          本月已记录 {Object.keys(dayMap).length} 天
+        </p>
+      </div>
+
+      {/* Weekday headers */}
+      <div className="grid grid-cols-7 mb-1">
+        {WEEKDAYS.map(d => (
+          <div key={d} className="text-center text-[10px] font-bold text-[#ccc] py-1">{d}</div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1">
-        {Array.from({ length: days.firstDayOfWeek }).map((_, i) => (
-          <div key={`empty-${i}`} />
+
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-y-1">
+        {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+          <div key={`e-${i}`} />
         ))}
-        {Array.from({ length: days.daysInMonth }).map((_, i) => {
+        {Array.from({ length: daysInMonth }).map((_, i) => {
           const date = i + 1
-          const shape = days.dayMap[date]
+          const shape = dayMap[date]
           const isToday = date === todayDate
+          const isPast = date < todayDate
+
           return (
-            <div
-              key={date}
-              className={`flex flex-col items-center justify-center h-8 rounded-lg text-xs font-medium ${
-                isToday ? 'bg-[#fffbee] border border-[#FFD73B]' : ''
-              }`}
-            >
+            <div key={date} className="flex items-center justify-center h-9">
               {shape ? (
-                <span className="text-base leading-none">{SHAPE_EMOJI[shape]}</span>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                  isToday ? 'ring-2 ring-[#FFD73B] ring-offset-1' : ''
+                }`}>
+                  <span className="text-lg leading-none">{SHAPE_EMOJI[shape]}</span>
+                </div>
               ) : (
-                <span className={isToday ? 'text-[#F47900] font-black' : 'text-[#898989]'}>
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
+                  isToday
+                    ? 'bg-[#FFD73B] text-[#272727] shadow-[0_2px_8px_rgba(255,215,59,0.5)]'
+                    : isPast
+                    ? 'text-[#ddd]'
+                    : 'text-[#bbb]'
+                }`}>
                   {date}
-                </span>
+                </div>
               )}
             </div>
           )
