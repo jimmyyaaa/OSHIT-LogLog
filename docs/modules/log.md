@@ -68,17 +68,23 @@ Multiple lines per type, selected randomly.
 
 ## Token Reward Logic
 
-Reward dispatch happens after a successful save, not before.
+Reward dispatch happens after a successful save. The frontend awaits each reward response and shows a toast notification per reward received.
 
 ```
 on save success:
-  dispatch('daily_log')
+  show loading indicator
+
+  await dispatch('daily_log')          → toast "🪙 +1 SHIT 已到账"
 
   streak = computeStreak()
-  if streak === 3  → dispatch('streak_3')
-  if streak === 7  → dispatch('streak_7')
-  if streak === 30 → dispatch('streak_30')
+  if streak === 3  → await dispatch('streak_3')   → toast "🔥 连续3天！+3 SHIT"
+  if streak === 7  → await dispatch('streak_7')   → toast "⚡ 连续7天！+7 SHIT"
+  if streak === 30 → await dispatch('streak_30')  → toast "👑 连续30天！+30 SHIT"
 
-  if first time logging 'banana_bro' → dispatch('first_ideal_shape')
-  if all 7 days this week logged     → dispatch('week_complete')
+  if first time logging 'banana_bro' → await dispatch('first_ideal_shape') → toast "🍌 首次香蕉君！+5 SHIT"
+  if all 7 days this week logged     → await dispatch('week_complete')     → toast "📅 本周全勤！+10 SHIT"
+
+  hide loading indicator
 ```
+
+Toasts are queued and shown sequentially. Each toast auto-dismisses after ~2 seconds. If the request fails, no toast is shown (silent failure — token errors must not disrupt the user flow).

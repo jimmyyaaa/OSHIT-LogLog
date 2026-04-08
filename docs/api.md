@@ -56,7 +56,8 @@ type RewardAction =
 **Notes**
 - `userId` is provided by the parent platform's auth context.
 - The backend is responsible for deduplication (e.g. `first_ideal_shape` should only reward once per user).
-- The frontend does not receive or display token balance — it only fires the event.
+- The frontend **awaits** the response before showing the reward toast. The user sees a loading state during the request and a token notification once `success: true` is returned.
+- The frontend does not display token balance — it only shows a transient earned-reward toast (e.g. "🪙 +1 SHIT 已到账").
 
 ---
 

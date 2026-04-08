@@ -27,7 +27,7 @@ Three modules. One goal: prove the core loop works.
 **Feeling (optional)** — Single-select emoji tags:
 > Effortless · Could've Been More · Hard Won · …
 
-**3. Submit feedback** — Immediately after submit, a random contextual one-liner appears before the sheet closes:
+**3. Submit & token reward** — After submit, the sheet shows a brief loading state while awaiting the backend token response. Once confirmed, a reward toast appears (e.g. "🪙 +1 SHIT 已到账"). If multiple rewards trigger (e.g. daily log + streak milestone), toasts are shown sequentially. A random contextual health one-liner also appears:
 > *"A textbook Banana Bro. Today's mission: complete. 🎉"*
 > *"Rabbit Pellets detected. Water is the path to the light. 💧"*
 > *"Splash Zone logged. Rest up, commander."*
@@ -91,5 +91,5 @@ One-tap save to camera roll or direct share. The image contains no user-identifi
 - SHIT Squad / friend groups
 - Community boards
 - Smart nudges
-- Token display UI
+- Token balance display (balance is managed by external token system)
 - Contributing factors and location fields
