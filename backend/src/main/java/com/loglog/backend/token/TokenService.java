@@ -9,19 +9,13 @@ public class TokenService {
 
     private static final Logger log = LoggerFactory.getLogger(TokenService.class);
 
-    private final TokenApiClient tokenApiClient;
-
-    public TokenService(TokenApiClient tokenApiClient) {
-        this.tokenApiClient = tokenApiClient;
-    }
-
+    // TODO: replace with real TokenApiClient when external token service is ready
     public void reward(String userId, RewardAction action) {
         try {
-            tokenApiClient.sendReward(userId, action);
-            log.info("Token reward dispatched: userId={} action={}", userId, action);
-        } catch (Exception e) {
-            // Non-blocking: log and continue. Token failure must not affect user flow.
-            log.error("Token reward failed: userId={} action={} error={}", userId, action, e.getMessage());
+            Thread.sleep(1000);
+            log.info("[MOCK] Token reward dispatched: userId={} action={}", userId, action);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }
