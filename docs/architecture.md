@@ -4,7 +4,7 @@
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React + TypeScript, Vite |
+| Frontend | React + TypeScript, Vite, Tailwind CSS |
 | Backend | Java (Spring Boot) |
 | Data Storage | Browser localStorage (MVP) |
 | Report Generation | Frontend (canvas-based) |
