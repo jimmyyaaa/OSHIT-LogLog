@@ -1,11 +1,21 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { logService } from '../services/logService'
+
+const TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
 function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
 }
 
 export function useLogStats() {
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    if (!TEST_MODE) return
+    const handler = () => setTick(v => v + 1)
+    window.addEventListener('loglog-save', handler)
+    return () => window.removeEventListener('loglog-save', handler)
+  }, [])
+
   return useMemo(() => {
     const now = Date.now()
     const todayStart = startOfDay(new Date())
@@ -55,9 +65,9 @@ export function useLogStats() {
       }
     }
 
-    // Today logged
-    const todayLogged = logService.getEntriesInRange(todayStart, now).length > 0
+    // Today logged — always false in test mode so button stays enabled
+    const todayLogged = TEST_MODE ? false : logService.getEntriesInRange(todayStart, now).length > 0
 
     return { weekSmoothnessIndex, trend, monthBananaBroRate, streak, todayLogged }
-  }, [])
+  }, TEST_MODE ? [tick] : [])  // eslint-disable-line react-hooks/exhaustive-deps
 }

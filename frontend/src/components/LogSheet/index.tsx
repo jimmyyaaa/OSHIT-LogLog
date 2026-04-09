@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ShapeType, FeelingType, LogEntry } from '../../types'
+import type { ShapeType, FeelingType, LogEntry, RewardAction } from '../../types'
 import { logService } from '../../services/logService'
 import { tokenService } from '../../services/tokenService'
 import { useLogStats } from '../../hooks/useLogStats'
@@ -26,6 +26,18 @@ const FEEDBACK: Record<ShapeType, string[]> = {
   splash_zone:    ['喷溅体出没！好好休息，指挥官 🌊'],
 }
 
+const REWARD_DISPLAY: Record<RewardAction, { emoji: string; label: string; amount: number }> = {
+  daily_log:           { emoji: '🪙', label: '每日记录',    amount: 1  },
+  streak_3:            { emoji: '🔥', label: '3天连击',     amount: 3  },
+  streak_7:            { emoji: '⚡', label: '7天连击',     amount: 7  },
+  streak_30:           { emoji: '👑', label: '30天连击',    amount: 30 },
+  first_ideal_shape:   { emoji: '🍌', label: '首次香蕉君',  amount: 5  },
+  week_complete:       { emoji: '📅', label: '本周全勤',    amount: 10 },
+  first_report_shared: { emoji: '📊', label: '首次分享周报', amount: 15 },
+}
+
+type RewardResult = { action: RewardAction; ok: boolean }
+
 interface Props {
   onClose: () => void
   onSubmitted: (feedback: string) => void
@@ -34,8 +46,9 @@ interface Props {
 export function LogSheet({ onClose, onSubmitted }: Props) {
   const [shape, setShape] = useState<ShapeType | null>(null)
   const [feeling, setFeeling] = useState<FeelingType | null>(null)
-  const [phase, setPhase] = useState<'form' | 'loading' | 'rewarding'>('form')
-  const [rewardToasts, setRewardToasts] = useState<string[]>([])
+  const [phase, setPhase] = useState<'form' | 'loading' | 'result'>('form')
+  const [pendingActions, setPendingActions] = useState<RewardAction[]>([])
+  const [results, setResults] = useState<RewardResult[]>([])
   const { streak } = useLogStats()
 
   async function handleSubmit() {
@@ -48,168 +61,251 @@ export function LogSheet({ onClose, onSubmitted }: Props) {
       feeling: feeling ?? undefined,
     }
     logService.saveEntry(entry)
+
+    const newStreak = streak + 1
+    const actions: RewardAction[] = ['daily_log']
+    if (newStreak === 3)  actions.push('streak_3')
+    if (newStreak === 7)  actions.push('streak_7')
+    if (newStreak === 30) actions.push('streak_30')
+    const bananaCount = logService.getEntries().filter(e => e.shape === 'banana_bro').length
+    if (shape === 'banana_bro' && bananaCount === 1) actions.push('first_ideal_shape')
+
+    setPendingActions(actions)
     setPhase('loading')
 
     const userId = 'placeholder'
-    const earned: string[] = []
+    const apiResults: RewardResult[] = await Promise.all(
+      actions.map(async a => ({
+        action: a,
+        ok: (await tokenService.dispatchReward(userId, a)) !== null,
+      }))
+    )
 
-    // Await each reward sequentially
-    const daily = await tokenService.dispatchReward(userId, 'daily_log')
-    if (daily) earned.push(daily)
-
-    const newStreak = streak + 1
-    if (newStreak === 3) {
-      const r = await tokenService.dispatchReward(userId, 'streak_3')
-      if (r) earned.push(r)
-    }
-    if (newStreak === 7) {
-      const r = await tokenService.dispatchReward(userId, 'streak_7')
-      if (r) earned.push(r)
-    }
-    if (newStreak === 30) {
-      const r = await tokenService.dispatchReward(userId, 'streak_30')
-      if (r) earned.push(r)
-    }
-    if (shape === 'banana_bro') {
-      const r = await tokenService.dispatchReward(userId, 'first_ideal_shape')
-      if (r) earned.push(r)
-    }
-
-    // Show reward toasts sequentially
-    if (earned.length > 0) {
-      setPhase('rewarding')
-      setRewardToasts(earned)
-
-      // Dismiss after showing all toasts
-      const totalTime = earned.length * 1800
-      setTimeout(() => {
-        const lines = FEEDBACK[shape]
-        onSubmitted(lines[Math.floor(Math.random() * lines.length)])
-      }, totalTime)
-    } else {
-      const lines = FEEDBACK[shape]
-      onSubmitted(lines[Math.floor(Math.random() * lines.length)])
-    }
+    setResults(apiResults)
+    setPhase('result')
   }
 
+  function handleConfirm() {
+    if (!shape) return
+    const lines = FEEDBACK[shape]
+    onSubmitted(lines[Math.floor(Math.random() * lines.length)])
+  }
+
+  const successCount = results.filter(r => r.ok).reduce((sum, r) => sum + REWARD_DISPLAY[r.action].amount, 0)
+  const allFailed = results.length > 0 && results.every(r => !r.ok)
+
   return (
-    <div className="fixed inset-0 z-50" onClick={phase === 'form' ? onClose : undefined}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-
+    <div className="fixed inset-0 z-50">
       <div
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl animate-slide-up"
-        style={{ boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-[#e5e5e5] rounded-full" />
-        </div>
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={phase === 'form' ? onClose : undefined}
+      />
 
-        <div className="px-5 pb-10 pt-2">
-
-          {/* Loading phase */}
-          {phase === 'loading' && (
-            <div className="py-12 flex flex-col items-center gap-4">
-              <div className="text-4xl animate-spin-slow">💩</div>
-              <p className="font-black text-[#272727] text-lg">记录中...</p>
-              <p className="text-xs text-[#aaa]">正在领取 SHIT 代币，请稍候</p>
+      {/* ── 填写表单（底部 sheet） ── */}
+      {phase === 'form' && (
+        <div
+          className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl animate-slide-up"
+          style={{ boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 bg-[#e5e5e5] rounded-full" />
+          </div>
+          <div className="px-5 pb-10 pt-2">
+            <div className="text-center mb-6">
+              <div className="text-3xl mb-1 animate-float">💩</div>
+              <h2 className="font-black text-[#272727] text-xl">记录这次美妙的旅程</h2>
+              <p className="text-xs text-[#aaa] mt-0.5">诚实作答，你的肠道感谢你</p>
             </div>
-          )}
 
-          {/* Reward toast phase */}
-          {phase === 'rewarding' && (
-            <div className="py-12 flex flex-col items-center gap-4">
-              <div className="text-4xl animate-bounce-in">🎉</div>
-              <div className="flex flex-col items-center gap-2 w-full">
-                {rewardToasts.map((toast, i) => (
-                  <div
-                    key={i}
-                    className="w-full text-center py-3 px-4 rounded-2xl font-black text-base animate-bounce-in"
-                    style={{
-                      background: 'linear-gradient(135deg, #FFD73B, #F5C800)',
-                      color: '#272727',
-                      animationDelay: `${i * 0.15}s`,
-                      boxShadow: '0 4px 16px rgba(255,215,59,0.4)',
-                    }}
+            <div className="mb-5">
+              <p className="text-xs font-bold text-[#272727] mb-2 uppercase tracking-wider">
+                形态 <span className="text-[#F47900]">必填</span>
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1 snap-x">
+                {SHAPES.map(s => (
+                  <button
+                    key={s.type}
+                    onClick={() => setShape(s.type)}
+                    className={`flex-shrink-0 snap-start flex flex-col items-center gap-1 w-[68px] py-3 px-1 rounded-2xl border-2 transition-all tap-scale ${
+                      shape === s.type
+                        ? 'border-[#FFD73B] bg-[#fffbee] shadow-[0_2px_12px_rgba(255,215,59,0.3)]'
+                        : 'border-[#f0ede0] bg-[#fafaf7]'
+                    }`}
                   >
-                    {toast}
-                  </div>
+                    <span className="text-2xl">{s.emoji}</span>
+                    <span className="text-[11px] font-bold text-[#272727] text-center leading-tight">{s.label}</span>
+                    <span className="text-[9px] text-[#aaa] text-center leading-tight">{s.sub}</span>
+                  </button>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Form phase */}
-          {phase === 'form' && (
-            <>
-              <div className="text-center mb-6">
-                <div className="text-3xl mb-1 animate-float">💩</div>
-                <h2 className="font-black text-[#272727] text-xl">记录这次美妙的旅程</h2>
-                <p className="text-xs text-[#aaa] mt-0.5">诚实作答，你的肠道感谢你</p>
+            <div className="mb-7">
+              <p className="text-xs font-bold text-[#272727] mb-2 uppercase tracking-wider">
+                感受 <span className="text-[#aaa] font-medium">选填</span>
+              </p>
+              <div className="flex gap-2">
+                {FEELINGS.map(f => (
+                  <button
+                    key={f.type}
+                    onClick={() => setFeeling(feeling === f.type ? null : f.type)}
+                    className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl border-2 transition-all tap-scale ${
+                      feeling === f.type
+                        ? 'border-[#FFD73B] bg-[#fffbee]'
+                        : 'border-[#f0ede0] bg-[#fafaf7]'
+                    }`}
+                  >
+                    <span className="text-xl">{f.emoji}</span>
+                    <span className="text-[10px] font-bold text-[#272727]">{f.label}</span>
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Shape */}
-              <div className="mb-5">
-                <p className="text-xs font-bold text-[#272727] mb-2 uppercase tracking-wider">
-                  形态 <span className="text-[#F47900]">必填</span>
-                </p>
-                <div className="flex gap-2 overflow-x-auto pb-1 snap-x">
-                  {SHAPES.map(s => (
-                    <button
-                      key={s.type}
-                      onClick={() => setShape(s.type)}
-                      className={`flex-shrink-0 snap-start flex flex-col items-center gap-1 w-[68px] py-3 px-1 rounded-2xl border-2 transition-all tap-scale ${
-                        shape === s.type
-                          ? 'border-[#FFD73B] bg-[#fffbee] shadow-[0_2px_12px_rgba(255,215,59,0.3)]'
-                          : 'border-[#f0ede0] bg-[#fafaf7]'
-                      }`}
+            <button
+              onClick={handleSubmit}
+              disabled={!shape}
+              className={`w-full py-4 rounded-2xl font-black text-lg transition-all tap-scale ${
+                shape
+                  ? 'bg-[#FFD73B] text-[#272727] shadow-[0_4px_16px_rgba(255,215,59,0.45)]'
+                  : 'bg-[#f0ede0] text-[#ccc]'
+              }`}
+            >
+              ✅ 确认提交
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 领取中（居中 modal） ── */}
+      {phase === 'loading' && (
+        <div className="flex items-center justify-center h-full px-4">
+          <div
+            className="w-[340px] rounded-3xl bg-white animate-bounce-in"
+            style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-5 py-8 flex flex-col items-center gap-5">
+              <div className="text-5xl animate-spin-slow">💩</div>
+              <div className="text-center">
+                <p className="font-black text-[#272727] text-lg">正在领取代币</p>
+                <p className="text-xs text-[#aaa] mt-1">等待后端确认中...</p>
+              </div>
+              <div className="w-full flex flex-col gap-2.5">
+                {pendingActions.map(action => {
+                  const d = REWARD_DISPLAY[action]
+                  return (
+                    <div
+                      key={action}
+                      className="flex items-center justify-between px-4 py-3 rounded-2xl"
+                      style={{ background: '#FAF6EE', border: '1px solid #EDE8D8' }}
                     >
-                      <span className="text-2xl">{s.emoji}</span>
-                      <span className="text-[11px] font-bold text-[#272727] text-center leading-tight">{s.label}</span>
-                      <span className="text-[9px] text-[#aaa] text-center leading-tight">{s.sub}</span>
-                    </button>
-                  ))}
-                </div>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">{d.emoji}</span>
+                        <span className="font-bold text-sm text-[#272727]">{d.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-sm" style={{ color: '#D48800' }}>+{d.amount} SHIT</span>
+                        <div className="flex gap-0.5 items-center">
+                          {[0, 1, 2].map(i => (
+                            <div
+                              key={i}
+                              className="w-1.5 h-1.5 rounded-full animate-pulse"
+                              style={{ background: '#FFD73B', animationDelay: `${i * 0.22}s` }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 领取结果（居中 modal） ── */}
+      {phase === 'result' && (
+        <div className="flex items-center justify-center h-full px-4">
+          <div
+            className="w-[340px] rounded-3xl bg-white animate-bounce-in"
+            style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-5 py-8 flex flex-col items-center gap-5">
+              {allFailed ? (
+                <>
+                  <div className="text-5xl animate-bounce-in">😔</div>
+                  <div className="text-center animate-bounce-in" style={{ animationDelay: '0.08s' }}>
+                    <p className="font-black text-[#272727] text-lg">领取失败</p>
+                    <p className="text-xs text-[#aaa] mt-1">网络异常，代币将在恢复后补发</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-5xl animate-bounce-in">🎉</div>
+                  <div className="text-center animate-bounce-in" style={{ animationDelay: '0.08s' }}>
+                    <p className="font-black text-[#272727] text-lg">代币已到账！</p>
+                    <p className="text-xs text-[#aaa] mt-1">感谢你的如实汇报</p>
+                  </div>
+                </>
+              )}
+
+              <div className="w-full flex flex-col gap-2.5">
+                {results.map(({ action, ok }, i) => {
+                  const d = REWARD_DISPLAY[action]
+                  return (
+                    <div
+                      key={action}
+                      className="flex items-center justify-between px-4 py-3 rounded-2xl animate-bounce-in"
+                      style={{
+                        background: ok ? 'linear-gradient(135deg, #FFF8D6, #FFF3B0)' : '#F9F9F9',
+                        border: ok ? '1.5px solid #FFE066' : '1.5px solid #E8E8E8',
+                        animationDelay: `${i * 0.12}s`,
+                      }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl" style={{ opacity: ok ? 1 : 0.4 }}>{d.emoji}</span>
+                        <span className="font-bold text-sm" style={{ color: ok ? '#272727' : '#ADADAD' }}>{d.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-sm" style={{ color: ok ? '#D48800' : '#ADADAD' }}>
+                          {ok ? `+${d.amount} SHIT` : '失败'}
+                        </span>
+                        <span className="text-base">{ok ? '✅' : '❌'}</span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
 
-              {/* Feeling */}
-              <div className="mb-7">
-                <p className="text-xs font-bold text-[#272727] mb-2 uppercase tracking-wider">
-                  感受 <span className="text-[#aaa] font-medium">选填</span>
-                </p>
-                <div className="flex gap-2">
-                  {FEELINGS.map(f => (
-                    <button
-                      key={f.type}
-                      onClick={() => setFeeling(feeling === f.type ? null : f.type)}
-                      className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl border-2 transition-all tap-scale ${
-                        feeling === f.type
-                          ? 'border-[#FFD73B] bg-[#fffbee]'
-                          : 'border-[#f0ede0] bg-[#fafaf7]'
-                      }`}
-                    >
-                      <span className="text-xl">{f.emoji}</span>
-                      <span className="text-[10px] font-bold text-[#272727]">{f.label}</span>
-                    </button>
-                  ))}
+              {!allFailed && (
+                <div
+                  className="w-full flex items-center justify-center py-3.5 rounded-2xl animate-bounce-in"
+                  style={{ background: '#272727', animationDelay: `${results.length * 0.12 + 0.1}s` }}
+                >
+                  <p className="font-black text-white text-base">合计 +{successCount} SHIT 💩</p>
                 </div>
-              </div>
+              )}
 
               <button
-                onClick={handleSubmit}
-                disabled={!shape}
-                className={`w-full py-4 rounded-2xl font-black text-lg transition-all tap-scale ${
-                  shape
-                    ? 'bg-[#FFD73B] text-[#272727] shadow-[0_4px_16px_rgba(255,215,59,0.45)]'
-                    : 'bg-[#f0ede0] text-[#ccc]'
-                }`}
+                onClick={handleConfirm}
+                className="w-full py-4 rounded-2xl font-black text-lg tap-scale animate-bounce-in"
+                style={{
+                  background: allFailed ? '#F5F5F5' : '#FFD73B',
+                  color: '#272727',
+                  boxShadow: allFailed ? 'none' : '0 4px 16px rgba(255,215,59,0.45)',
+                  animationDelay: `${results.length * 0.12 + 0.2}s`,
+                }}
               >
-                ✅ 确认提交
+                {allFailed ? '我知道了' : '好的！'}
               </button>
-            </>
-          )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

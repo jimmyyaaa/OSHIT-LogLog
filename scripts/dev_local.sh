@@ -2,8 +2,7 @@
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-echo "Starting LogLog TEST environment..."
-echo "  [Frontend] VITE_TEST_MODE=true — 可连续点击记录，streak 逐次递增"
+echo "Starting LogLog dev environment..."
 echo ""
 
 # Start backend
@@ -11,13 +10,13 @@ cd "$ROOT/backend"
 ./gradlew bootRun &
 BACKEND_PID=$!
 
-# Start frontend in test mode (vite --mode test)
+# Start frontend
 cd "$ROOT/frontend"
-npm run test &
+npm run dev &
 FRONTEND_PID=$!
 
 echo ""
-echo "  Frontend: http://localhost:5173  (测试模式)"
+echo "  Frontend: http://localhost:5173"
 echo "  Backend:  http://localhost:8080"
 echo ""
 echo "Press Ctrl+C to stop both servers."
