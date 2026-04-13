@@ -2,54 +2,45 @@
 
 ## Responsibility
 
-Generate a shareable weekly report card from local data and export it as an image.
+Generate a shareable weekly report card from server data and export it as an image.
+
+All user-facing text is in Chinese (Simplified).
 
 ---
 
 ## Trigger
 
-User taps "Generate Weekly Report" on the Profile page. Generation is on-demand, not automatic.
+User taps "生成周报" on the Profile page. Generation is on-demand, not automatic.
 
 ---
 
 ## Data Inputs
 
-All sourced from localStorage via the data service. Covers the past 7 days.
+All sourced from the server via `GET /api/logs`. Covers the previous week (Monday to Sunday).
 
 | Input | Description |
 |-------|-------------|
-| Total logs | Count of entries in the past 7 days |
+| Total logs | Count of entries in the target week (Mon-Sun) |
 | Shape breakdown | Count per `ShapeType` |
 | Smoothness Index | `banana_bro count / total count` |
+| Peak Performance Day | Day of the week with the most entries |
+| Current Streak | Consecutive days with at least one entry, counting back from Sunday |
 
 ---
 
 ## Report Sections
 
-### 1. Numbers
-Raw stats, plainly listed:
-- Total logs this week
-- Shape type counts (e.g. Banana Bro ×3, Rabbit Pellets ×2)
-- Smoothness Index percentage
+### 1. Smoothness Index
+`banana_bro count / total count` as a percentage for the week.
 
-### 2. Diagnosis
-One auto-generated line based on the dominant shape pattern:
+### 2. Golden Ratio
+Ideal shape frequency — breakdown of shape types with `banana_bro` highlighted.
 
-| Condition | Diagnosis |
-|-----------|-----------|
-| `banana_bro` ≥ 50% | *"Gut systems: stable. You're in the zone."* |
-| `rabbit_pellets` or `twisted_rope` dominant | *"Signs of low hydration. Things are moving slowly."* |
-| `splash_zone` or `soft_serve` dominant | *"Your gut had a rough week. Take it easy."* |
-| No data | *"No data this week. The gut waits for no one."* |
+### 3. Peak Performance Day
+The day of the week with the highest log count. If tied, show the earliest day.
 
-### 3. Suggestion
-One actionable tip tied to the diagnosis:
-
-| Condition | Suggestion |
-|-----------|-----------|
-| Stable | *"Keep up the water intake and regular meals."* |
-| Low hydration | *"Try drinking a glass of water first thing in the morning."* |
-| Loose | *"Consider lighter meals and reduce stress if possible."* |
+### 4. Streak Highlights
+Current streak length and any milestones (3, 7, 30) reached during the report week.
 
 ---
 
@@ -65,7 +56,7 @@ No external library is required for MVP. If layout complexity increases, `html2c
 
 After generation:
 1. Preview is shown to the user
-2. Two options: **Save to photos** (download link) / **Share** (Web Share API, falls back to copy link)
-3. On first share: dispatch token reward `first_report_shared` to backend
+2. Two options: **保存图片** (download link) / **分享** (Web Share API, falls back to copy link)
+3. On first share: award 15 SHIT Points (frontend computation, shown as reward modal)
 
 The exported image contains no user-identifiable information.

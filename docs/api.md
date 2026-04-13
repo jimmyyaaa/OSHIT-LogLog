@@ -4,39 +4,96 @@
 
 ## Overview
 
-In MVP, all log data is stored in localStorage and all computation happens on the frontend. The backend exposes one endpoint: token reward relay.
+The backend provides two groups of endpoints: log entry CRUD and SHIT Points claim relay. All log data is stored in a server-local database. Points computation happens on the frontend; the backend only handles the claim relay to the external points module.
 
 ---
 
-## Token Relay
+## Log Entries
 
-### `POST /api/token/reward`
+### `POST /api/logs`
 
-Called by the frontend after a reward-eligible action is completed. The backend validates the action and forwards the reward request to the external token API.
+Create a new log entry.
+
+**Request**
+
+```json
+{
+  "shape": "ShapeType",
+  "color": "ColorType | null",
+  "feeling": "FeelingType | null",
+  "contributingFactors": ["string"] | null,
+  "location": "LocationType | null"
+}
+```
+
+**Response** `201 Created`
+
+```json
+{
+  "id": "string",
+  "userId": "string",
+  "timestamp": "ISO 8601",
+  "shape": "ShapeType",
+  "color": "ColorType | null",
+  "feeling": "FeelingType | null",
+  "contributingFactors": ["string"] | null,
+  "location": "LocationType | null"
+}
+```
+
+---
+
+### `GET /api/logs`
+
+Fetch log entries for the current user within a date range.
+
+**Query Parameters**
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `from` | ISO 8601 date | Yes | Start date (inclusive) |
+| `to` | ISO 8601 date | Yes | End date (inclusive) |
+
+**Response** `200 OK`
+
+```json
+[
+  {
+    "id": "string",
+    "userId": "string",
+    "timestamp": "ISO 8601",
+    "shape": "ShapeType",
+    "color": "ColorType | null",
+    "feeling": "FeelingType | null",
+    "contributingFactors": ["string"] | null,
+    "location": "LocationType | null"
+  }
+]
+```
+
+**Usage by page:**
+- **Home (calendar):** fetch current month's entries
+- **Dashboard:** fetch entries for current week (Monday-Sunday) and current month
+- **Report:** fetch entries for the target week (Monday-Sunday)
+
+---
+
+## SHIT Points
+
+### `POST /api/points/claim`
+
+Claim accumulated SHIT Points. The backend validates and relays the request to the external points module.
 
 **Request**
 
 ```json
 {
   "userId": "string",
-  "action": "RewardAction"
+  "points": "number"
 }
 ```
 
-**RewardAction**
-
-```typescript
-type RewardAction =
-  | 'daily_log'              // +1 SHIT
-  | 'streak_3'               // +3 SHIT
-  | 'streak_7'               // +7 SHIT
-  | 'streak_30'              // +30 SHIT
-  | 'first_ideal_shape'      // +5 SHIT
-  | 'week_complete'          // +10 SHIT
-  | 'first_report_shared'    // +15 SHIT
-```
-
-**Response**
+**Response** `200 OK`
 
 ```json
 {
@@ -55,18 +112,33 @@ type RewardAction =
 
 **Notes**
 - `userId` is provided by the parent platform's auth context.
-- The backend is responsible for deduplication (e.g. `first_ideal_shape` should only reward once per user).
-- The frontend **awaits** the response before showing the reward toast. The user sees a loading state during the request and a token notification once `success: true` is returned.
-- The frontend does not display token balance — it only shows a transient earned-reward toast (e.g. "🪙 +1 SHIT 已到账").
+- The backend is responsible for validating the claim before relaying to the external module.
+- The frontend awaits the response and shows success/failure feedback to the user.
 
 ---
 
-## Future Endpoints (post-MVP)
+## Enums
 
-When data migrates from localStorage to a database, the following endpoints will be added:
+### ShapeType
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/log` | Submit a new log entry |
-| `GET` | `/api/log` | Fetch all entries for the current user |
-| `GET` | `/api/dashboard` | Fetch computed dashboard metrics |
+```
+rabbit_pellets | twisted_rope | banana_bro | soft_serve | splash_zone
+```
+
+### ColorType
+
+```
+golden_standard | dark_roast | clay_warning
+```
+
+### FeelingType
+
+```
+effortless | could_have_been_more | hard_won
+```
+
+### LocationType
+
+```
+home | office | school | outdoors | car | plane | boat
+```

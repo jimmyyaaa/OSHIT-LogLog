@@ -5,23 +5,50 @@ export type ShapeType =
   | 'soft_serve'
   | 'splash_zone'
 
+export type ColorType =
+  | 'golden_standard'
+  | 'dark_roast'
+  | 'clay_warning'
+
 export type FeelingType =
   | 'effortless'
   | 'could_have_been_more'
   | 'hard_won'
 
+export type LocationType =
+  | 'home'
+  | 'office'
+  | 'school'
+  | 'outdoors'
+  | 'car'
+  | 'plane'
+  | 'boat'
+
 export interface LogEntry {
   id: string
-  timestamp: number
+  userId: string
+  timestamp: string
   shape: ShapeType
+  color?: ColorType
   feeling?: FeelingType
+  contributingFactors?: string[]
+  location?: LocationType
 }
 
-export type RewardAction =
-  | 'daily_log'
-  | 'streak_3'
-  | 'streak_7'
-  | 'streak_30'
-  | 'first_ideal_shape'
-  | 'week_complete'
-  | 'first_report_shared'
+export interface CreateLogPayload {
+  shape: ShapeType
+  color?: ColorType
+  feeling?: FeelingType
+  contributingFactors?: string[]
+  location?: LocationType
+}
+
+export interface ClaimPointsPayload {
+  userId: string
+  points: number
+}
+
+export interface ClaimPointsResponse {
+  success: boolean
+  error?: string
+}

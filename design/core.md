@@ -33,4 +33,10 @@ Bowel habits are one of the body's most honest health indicators — frequency, 
 
 ---
 
+## Language
+
+The app interface is in **Chinese (Simplified)**. All user-facing text — buttons, labels, headings, feedback copy, modals, navigation, descriptions — must be written in Chinese.
+
+---
+
 > *Make every bathroom visit a small act of self-care.*

@@ -6,9 +6,9 @@
 |-------|-----------|
 | Frontend | React + TypeScript, Vite, Tailwind CSS |
 | Backend | Java (Spring Boot) |
-| Data Storage | Browser localStorage (MVP) |
+| Database | Server-local embedded database (e.g. SQLite / H2) |
 | Report Generation | Frontend (canvas-based) |
-| Token System | External API (via backend) |
+| Points System | Frontend computation + backend claim relay |
 
 ---
 
@@ -21,11 +21,15 @@
 │                                 │
 │  ┌──────────────────────────┐   │
 │  │     Data Service Layer   │   │
-│  │  (localStorage adapter)  │   │
+│  │     (REST API client)    │   │
+│  └──────────────────────────┘   │
+│  ┌──────────────────────────┐   │
+│  │   SHIT Points Engine     │   │
+│  │   (frontend-only logic)  │   │
 │  └──────────────────────────┘   │
 │  ┌──────────────────────────┐   │
 │  │     Report Generator     │   │
-│  │   (canvas, local data)   │   │
+│  │   (canvas, from API data)│   │
 │  └──────────────────────────┘   │
 └────────────┬────────────────────┘
              │ HTTPS / REST
@@ -33,31 +37,42 @@
 │          Java Backend           │
 │                                 │
 │  ┌──────────┐  ┌─────────────┐  │
-│  │  Log API │  │ Token relay │  │
-│  └──────────┘  └──────┬──────┘  │
-└─────────────────────┬─┼─────────┘
-                      │ │
-            ┌─────────▼─▼────────┐
-            │  Token Service     │
-            │  (External API)    │
-            └────────────────────┘
+│  │  Log API │  │ Points API  │  │
+│  └────┬─────┘  └──────┬──────┘  │
+│       │               │         │
+│  ┌────▼────────┐      │         │
+│  │  Database   │      │         │
+│  │  (local)    │      │         │
+│  └─────────────┘      │         │
+└───────────────────────┼─────────┘
+                        │
+              ┌─────────▼────────┐
+              │  External Points │
+              │     Module       │
+              └──────────────────┘
 ```
 
 ---
 
 ## Key Design Decisions
 
-**Data storage is localStorage in MVP**
-All user log data is stored in the browser locally. No user account or login is required for this module — authentication is handled by the parent platform.
+**Data is stored in a server-local database**
+All user log data is persisted in an embedded database on the server. The database should be free and file-based (e.g. SQLite or H2), requiring no external database service.
 
-**Data access must be encapsulated**
-The frontend must never read/write localStorage directly in components. All data access goes through a dedicated service layer. This ensures that migrating to a backend database requires only replacing the service layer, with zero changes to UI components.
+**Data access is encapsulated behind a service layer**
+The frontend never reads the database directly. All data flows through REST API calls to the backend. The frontend data service layer abstracts API communication from UI components.
+
+**SHIT Points are computed on the frontend**
+The frontend determines which rewards are triggered (daily log, streaks, milestones) based on log data fetched from the API. Toast notifications are shown immediately. No backend involvement in points computation.
+
+**Claiming SHIT Points goes through the backend**
+When the user taps "Claim SHIT Points" on the Profile page, the frontend calls a backend API. The backend relays the claim to the external points module. API keys are never exposed to the client.
 
 **Report generation is frontend-side**
-Weekly report cards are rendered on the client using canvas, entirely from local data. No backend call is needed. The result is exported as an image for saving or sharing.
+Weekly report cards are rendered on the client using canvas, from data fetched via the API. The result is exported as an image for saving or sharing.
 
-**Token rewards go through the backend**
-Frontend signals reward-eligible actions to the backend. The backend validates and calls the external token API. API keys are never exposed to the client.
+**Week is defined as Monday to Sunday**
+All weekly metrics (Weekly Smoothness Index, weekly report) use Monday 00:00 to Sunday 23:59 as the week boundary.
 
 **This module is part of a larger platform**
 Login and user identity are managed externally. This module receives user context from the parent platform and does not implement authentication.
@@ -76,7 +91,7 @@ src/
     LogSheet/
     Calendar/
     MetricCard/
-  services/         # All data access and API calls
+  services/         # API client and data access
   types/            # TypeScript interfaces and types
   hooks/            # Shared React hooks
 ```
@@ -89,6 +104,7 @@ src/
 src/
   controller/       # REST endpoints
   service/          # Business logic
-  model/            # Data models
-  token/            # External token API integration
+  model/            # Data models (JPA entities)
+  repository/       # Database access (Spring Data)
+  points/           # External points module integration
 ```

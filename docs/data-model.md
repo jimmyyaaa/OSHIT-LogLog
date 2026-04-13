@@ -4,14 +4,18 @@
 
 ## LogEntry
 
-The core data unit. One entry per visit.
+The core data unit. One entry per visit. Stored in the server-local database.
 
 ```typescript
 interface LogEntry {
-  id: string          // UUID, generated client-side
-  timestamp: number   // Unix timestamp (ms)
-  shape: ShapeType    // Required
-  feeling?: FeelingType  // Optional
+  id: string                        // UUID, generated server-side
+  userId: string                    // From parent platform auth context
+  timestamp: string                 // ISO 8601
+  shape: ShapeType                  // Required
+  color?: ColorType                 // Optional
+  feeling?: FeelingType             // Optional
+  contributingFactors?: string[]    // Optional
+  location?: LocationType           // Optional
 }
 ```
 
@@ -32,6 +36,17 @@ type ShapeType =
 
 ---
 
+## ColorType
+
+```typescript
+type ColorType =
+  | 'golden_standard'  // Normal, healthy
+  | 'dark_roast'       // Dark brown/black
+  | 'clay_warning'     // Pale/clay-colored
+```
+
+---
+
 ## FeelingType
 
 ```typescript
@@ -43,30 +58,50 @@ type FeelingType =
 
 ---
 
-## Local Storage Schema
-
-All entries are stored under a single key.
+## LocationType
 
 ```typescript
-// localStorage key: 'loglog_entries'
-// value: JSON.stringify(LogEntry[])
+type LocationType =
+  | 'home'
+  | 'office'
+  | 'school'
+  | 'outdoors'
+  | 'car'
+  | 'plane'
+  | 'boat'
+```
+
+---
+
+## Database Schema
+
+```sql
+CREATE TABLE log_entries (
+  id                    TEXT PRIMARY KEY,
+  user_id               TEXT NOT NULL,
+  timestamp             TEXT NOT NULL,
+  shape                 TEXT NOT NULL,
+  color                 TEXT,
+  feeling               TEXT,
+  contributing_factors   TEXT,          -- JSON array, e.g. '["spicy_food","stressed"]'
+  location              TEXT
+);
+
+CREATE INDEX idx_log_entries_user_time ON log_entries (user_id, timestamp);
 ```
 
 ---
 
 ## Derived Data
 
-Computed at runtime from `LogEntry[]`. Never stored.
+Computed at runtime on the frontend from `LogEntry[]` fetched via API. Never stored.
+
+Week is defined as Monday 00:00 to Sunday 23:59.
 
 | Metric | Calculation |
 |--------|-------------|
-| Weekly Smoothness Index | `banana_bro count / total entries` in the past 7 days |
-| Monthly Banana Bro Rate | `banana_bro count / total entries` in the current month |
+| Weekly Smoothness Index | `banana_bro count / total entries` in the current week (Mon-Sun) |
+| Monthly Banana Bro Rate | `banana_bro count / total entries` in the current calendar month |
 | Current Streak | Consecutive days with at least one entry, counting back from today |
-| Weekly shape breakdown | Count per `ShapeType` in the past 7 days |
-
----
-
-## Migration Note
-
-When migrating from localStorage to a database, `LogEntry` maps directly to a table row. The `id` field (UUID) serves as primary key. Only the data service layer needs to change — no UI components are affected.
+| Weekly shape breakdown | Count per `ShapeType` in the current week (Mon-Sun) |
+| Accumulated SHIT Points | Computed from full log history using reward rules defined in design |

@@ -2,7 +2,9 @@
 
 ## Responsibility
 
-Handle the full log entry flow: trigger, form input, submission, feedback, and token reward dispatch.
+Handle the full log entry flow: trigger, form input, submission, feedback, and SHIT Points computation.
+
+All user-facing text is in Chinese (Simplified).
 
 ---
 
@@ -10,81 +12,100 @@ Handle the full log entry flow: trigger, form input, submission, feedback, and t
 
 1. User taps the home button
 2. Log sheet slides up (bottom sheet)
-3. User selects shape (required) and feeling (optional)
+3. User selects shape (required), and optionally: color, feeling, contributing factors, location
 4. User taps submit
-5. Entry is saved to localStorage via the data service
+5. Entry is saved to the server database via `POST /api/logs`
 6. A random feedback line is shown based on the logged shape
 7. Sheet closes, home button updates to post-log state
-8. Token reward is dispatched to the backend (`daily_log`)
-9. If applicable, streak milestone rewards are also dispatched (`streak_3`, `streak_7`, `streak_30`)
+8. Frontend computes SHIT Points rewards and shows reward modals sequentially
 
 ---
 
 ## Components
 
 **`LogSheet`**
-Bottom sheet component. Contains the shape selector, feeling tags, and submit button. Receives an `onSubmit` callback and a `onClose` callback.
+Bottom sheet component. Contains all input selectors and submit button. Receives an `onSubmit` callback and a `onClose` callback.
 
 **`ShapeSelector`**
 Horizontal scrollable icon row. Each item shows an illustration and label. Single-select, required.
 
-**`FeelingTags`**
-Icon button row. Single-select, optional.
+**`ColorSelector`**
+Single-select tags. Optional.
 
-**`FeedbackToast`**
-Displays the post-submit one-liner. Auto-dismisses after ~2 seconds.
+**`FeelingTags`**
+Single-select tags. Optional.
+
+**`ContributingFactors`**
+Multi-select tags. Optional.
+
+**`LocationSelector`**
+Single-select tags. Optional.
+
+**`RewardModal`**
+Displays earned SHIT Points. User dismisses by tapping an "OK" button. If multiple rewards are earned, modals are queued and shown one at a time.
 
 ---
 
-## Data Service Interface
+## API Interface
 
 ```typescript
 // services/logService.ts
 
-saveEntry(entry: LogEntry): void
-getEntries(): LogEntry[]
-getEntriesInRange(from: number, to: number): LogEntry[]
+createEntry(entry: {
+  shape: ShapeType;
+  color?: ColorType;
+  feeling?: FeelingType;
+  contributingFactors?: string[];
+  location?: LocationType;
+}): Promise<LogEntry>
+getEntries(from: string, to: string): Promise<LogEntry[]>
 ```
 
-All reads and writes go through this interface. Components never access localStorage directly.
+All reads and writes go through the API service layer. Components never call the API directly.
 
 ---
 
 ## Feedback Copy
 
-Feedback is selected based on `ShapeType`:
+Feedback is selected based on `ShapeType`. All copy is in Chinese.
 
 | Shape | Example copy |
 |-------|-------------|
-| `banana_bro` | *"A textbook Banana Bro. Today's mission: complete. 🎉"* |
-| `rabbit_pellets` | *"Rabbit Pellets detected. Water is the path to the light. 💧"* |
-| `twisted_rope` | *"Twisted Rope logged. Things are moving, just slowly."* |
-| `soft_serve` | *"Soft Serve today. Keep an eye on it."* |
-| `splash_zone` | *"Splash Zone logged. Rest up, commander."* |
+| `banana_bro` | *"教科书级香蕉君，今日任务完成。"* |
+| `rabbit_pellets` | *"检测到兔子弹，多喝水是正道。"* |
+| `twisted_rope` | *"扭曲绳已记录，慢慢来。"* |
+| `soft_serve` | *"今日软冰淇淋，注意观察。"* |
+| `splash_zone` | *"水花区已记录，好好休息。"* |
 
 Multiple lines per type, selected randomly.
 
 ---
 
-## Token Reward Logic
+## SHIT Points Logic
 
-Reward dispatch happens after a successful save. The frontend awaits each reward response and shows a toast notification per reward received.
+Points are computed entirely on the frontend after a successful save. Only the first log of each day triggers rewards. Rewards are displayed as modals, not toasts.
 
 ```
 on save success:
-  show loading indicator
+  rewards = []
 
-  await dispatch('daily_log')          → toast "🪙 +1 SHIT 已到账"
+  if first log of today:
+    rewards.push("+1 SHIT Point")
 
   streak = computeStreak()
-  if streak === 3  → await dispatch('streak_3')   → toast "🔥 连续3天！+3 SHIT"
-  if streak === 7  → await dispatch('streak_7')   → toast "⚡ 连续7天！+7 SHIT"
-  if streak === 30 → await dispatch('streak_30')  → toast "👑 连续30天！+30 SHIT"
+  if streak === 3  → rewards.push("+3 SHIT Point")
+  if streak === 7  → rewards.push("+7 SHIT Point")
+  if streak === 30 → rewards.push("+30 SHIT Point")
 
-  if first time logging 'banana_bro' → await dispatch('first_ideal_shape') → toast "🍌 首次香蕉君！+5 SHIT"
-  if all 7 days this week logged     → await dispatch('week_complete')     → toast "📅 本周全勤！+10 SHIT"
+  if first time logging 'banana_bro' → rewards.push("+5 SHIT Point")
+  if all 7 days this week logged (Mon-Sun) → rewards.push("+10 SHIT Point")
 
-  hide loading indicator
+  show rewards as sequential modals:
+    each modal displays the reward earned
+    user taps "好！" to dismiss → next modal appears
+
+// Referral reward is triggered externally when a referred friend completes 3 logs:
+  referral completed → modal "+20 SHIT Point"
 ```
 
-Toasts are queued and shown sequentially. Each toast auto-dismisses after ~2 seconds. If the request fails, no toast is shown (silent failure — token errors must not disrupt the user flow).
+Points computation failures must not disrupt the user flow.

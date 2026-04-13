@@ -1,6 +1,6 @@
 .gradle/
 build/
-*.class
-*.jar
-application-local.properties
-.env
+data/
+.idea/
+*.iml
+*.DS_Store
