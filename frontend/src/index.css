@@ -1,34 +1,64 @@
 @import "tailwindcss";
 
 @theme {
-  --color-pure-black: #000000;
-  --color-near-black: #1d1d1f;
-  --color-light-gray: #f5f5f7;
+  /* Warm gold palette from Stitch design */
+  --color-primary: #776300;
+  --color-primary-dim: #695700;
+  --color-primary-container: #ffd709;
+  --color-primary-fixed-dim: #efc900;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #5b4b00;
+  --color-on-primary-fixed: #453900;
+  --color-on-primary-fixed-variant: #665500;
+
+  --color-surface: #fffbff;
+  --color-surface-dim: #eee686;
+  --color-surface-container-low: #fffae1;
+  --color-surface-container: #fef6a5;
+  --color-surface-container-high: #f9f19b;
+  --color-surface-container-highest: #f3eb91;
+
+  --color-on-surface: #3d3905;
+  --color-on-surface-variant: #6b662f;
+  --color-outline: #878248;
+  --color-outline-variant: #c2bb7b;
+
+  --color-secondary: #7d5d53;
+  --color-secondary-container: #fed3c7;
+  --color-on-secondary-container: #65473e;
+
+  --color-tertiary: #00751f;
+  --color-tertiary-container: #91f78e;
+
+  --color-error: #be2d06;
+  --color-error-container: #f95630;
+
+  --color-inverse-surface: #100f00;
+
+  /* Legacy (kept for components that still use them) */
   --color-apple-blue: #0071e3;
   --color-link-blue: #0066cc;
-  --color-bright-blue: #2997ff;
-
-  --color-dark-surface-1: #272729;
-  --color-dark-surface-2: #262628;
-  --color-dark-surface-3: #28282a;
-  --color-dark-surface-4: #2a2a2d;
-
-  --color-button-active: #ededf2;
-  --color-button-default: #fafafc;
-
+  --color-near-black: #1d1d1f;
+  --color-light-gray: #f5f5f7;
   --color-text-secondary: rgba(0, 0, 0, 0.8);
   --color-text-tertiary: rgba(0, 0, 0, 0.48);
+  --color-button-active: #ededf2;
+  --color-dark-surface-4: #2a2a2d;
 
-  --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-body: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* Typography */
+  --font-display: 'Nunito', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-body: 'Nunito', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
 
+  /* Border radius */
   --radius-micro: 5px;
-  --radius-standard: 8px;
+  --radius-standard: 1rem;
   --radius-comfortable: 11px;
-  --radius-large: 12px;
-  --radius-pill: 980px;
+  --radius-large: 2rem;
+  --radius-xl: 3rem;
+  --radius-pill: 9999px;
 
-  --animate-pulse-ring: pulse-ring 2s ease-out infinite;
+  /* Animations */
+  --animate-pulse-ring: pulse-ring 2.5s ease-out infinite;
   --animate-slide-up: slide-up 0.3s ease-out;
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-toast-in: toast-in 0.3s ease-out;
@@ -37,9 +67,9 @@
 }
 
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.4); }
-  70% { box-shadow: 0 0 0 24px rgba(0, 113, 227, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 113, 227, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 9, 0.4); }
+  70% { box-shadow: 0 0 0 28px rgba(255, 215, 9, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 215, 9, 0); }
 }
 
 @keyframes slide-up {
@@ -66,4 +96,8 @@
   0% { transform: scale(0.8); opacity: 0; }
   60% { transform: scale(1.05); }
   100% { transform: scale(1); opacity: 1; }
+}
+
+body {
+  background-color: #fffbff;
 }
