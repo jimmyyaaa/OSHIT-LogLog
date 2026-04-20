@@ -1,0 +1,74 @@
+{
+  "version": "2.0",
+  "product": {
+    "name_zh": "屎了么",
+    "name_en": "Have You Shit?",
+    "short_name": "HYS"
+  },
+  "options": {
+    "types": [
+      { "code": "type_lumpy", "icon": "🐑", "name_zh": "羊粪蛋小队", "name_en": "Sheep Herd", "description_zh": "独立颗粒，有点干涩", "description_en": "Separate lumps, a bit dry" },
+      { "code": "type_ideal", "icon": "🍌", "name_zh": "黄金香蕉君", "name_en": "Gold Banana", "description_zh": "光滑柔软，标准优等生", "description_en": "Smooth and soft, the golden standard" },
+      { "code": "type_mushy", "icon": "🥣", "name_zh": "糊糊怪", "name_en": "Mushy Monster", "description_zh": "松软糊状，边界模糊", "description_en": "Soft mushy, blurry edges" },
+      { "code": "type_watery", "icon": "💧", "name_zh": "水枪喷射", "name_en": "Water Gun", "description_zh": "液态状，一泻千里", "description_en": "Liquid, no solid content" }
+    ],
+    "colors": [
+      { "code": "color_brown", "icon": "🍫", "name_zh": "巧克力棕", "name_en": "Chocolate Brown", "health_note_zh": "正常，完美", "health_note_en": "Normal, perfect" },
+      { "code": "color_yellow", "icon": "🌽", "name_zh": "玉米黄", "name_en": "Corn Yellow", "health_note_zh": "正常范围，可能与饮食有关", "health_note_en": "Normal range, may relate to diet" },
+      { "code": "color_green", "icon": "🥑", "name_zh": "牛油果绿", "name_en": "Avocado Green", "health_note_zh": "绿叶菜吃多了？正常", "health_note_en": "Too many greens? Normal" },
+      { "code": "color_black", "icon": "⚫", "name_zh": "煤炭黑", "name_en": "Coal Black", "health_note_zh": "提示：若持续出现，建议咨询医生", "health_note_en": "Caution: If persists, consult a doctor" },
+      { "code": "color_red", "icon": "🔴", "name_zh": "草莓红", "name_en": "Strawberry Red", "health_note_zh": "提醒：请留意，必要时就医检查", "health_note_en": "Alert: Pay attention, see a doctor if needed" }
+    ],
+    "feelings": [
+      { "code": "feel_smooth", "icon": "💧", "name_zh": "畅快淋漓", "name_en": "Smooth", "description_zh": "一气呵成，毫无压力", "description_en": "One smooth move, no pressure" },
+      { "code": "feel_leftover", "icon": "🤔", "name_zh": "意犹未尽", "name_en": "Leftover", "description_zh": "感觉没排完", "description_en": "Feeling unfinished" },
+      { "code": "feel_struggle", "icon": "😤", "name_zh": "艰苦卓绝", "name_en": "Struggle", "description_zh": "费了好大劲", "description_en": "Took a lot of effort" },
+      { "code": "feel_explosive", "icon": "💥", "name_zh": "一泻千里", "name_en": "Explosive", "description_zh": "速度快到失控", "description_en": "Fast and uncontrollable" },
+      { "code": "feel_stealth", "icon": "😶", "name_zh": "无感完成", "name_en": "Neutral", "description_zh": "没什么特别感觉", "description_en": "Nothing particularly noticeable" }
+    ],
+    "causes": [
+      { "code": "cause_spicy", "icon": "🌶️", "name_zh": "吃了辛辣", "name_en": "Spicy food" },
+      { "code": "cause_caffeine_alcohol", "icon": "☕🍺", "name_zh": "喝了咖啡/酒", "name_en": "Caffeine / Alcohol" },
+      { "code": "cause_stress_sleep", "icon": "😴😰", "name_zh": "熬夜/压力大", "name_en": "Stress / Lack of sleep" },
+      { "code": "cause_meds", "icon": "💊", "name_zh": "吃了药/补剂", "name_en": "Medication / Supplements" },
+      { "code": "cause_travel", "icon": "✈️", "name_zh": "旅行/环境变化", "name_en": "Travel / Environment change" },
+      { "code": "cause_other", "icon": "🤷", "name_zh": "其他/说不清", "name_en": "Other / Not sure" }
+    ],
+    "places": [
+      { "code": "place_home", "icon": "🏠", "name_zh": "家中宝座", "name_en": "Home throne" },
+      { "code": "place_office", "icon": "🏢", "name_zh": "公司战壕", "name_en": "Office trench" },
+      { "code": "place_public", "icon": "🚽", "name_zh": "公共厕所", "name_en": "Public restroom" },
+      { "code": "place_mall", "icon": "🛍️", "name_zh": "商场驿站", "name_en": "Mall stop" },
+      { "code": "place_transit", "icon": "🚗✈️🚢", "name_zh": "交通工具上", "name_en": "On transit (car/plane/ship/train)" },
+      { "code": "place_outdoor", "icon": "🌳", "name_zh": "户外野趣", "name_en": "Outdoor adventure" }
+    ]
+  },
+  "messages": [
+    { "id": 1, "condition": "type_ideal+feel_smooth", "text_zh": "今日出品的🍌香蕉君，标准得像教科书。建议裱起来。", "text_en": "Textbook Gold Banana. Send this to your performance review." },
+    { "id": 2, "condition": "type_ideal+place_home+cause_caffeine_alcohol", "text_zh": "在家+咖啡=肠道高铁准点发车。今日带薪拉屎KPI已完成。", "text_en": "WFH + coffee = gut on a bullet train. Today’s “meeting that could have been an email” ✅." },
+    { "id": 3, "condition": "type_lumpy+feel_struggle", "text_zh": "🐑羊粪蛋，一颗一颗地来，像老板画的大饼，碎了一地。", "text_en": "Sheep pellets, one by one. Like your boss’s “quick syncs” – scattered and painful." },
+    { "id": 4, "condition": "type_watery+feel_explosive", "text_zh": "💦水枪喷射，注意避让。比周一早会还让人措手不及。", "text_en": "Water gun mode. Less warning than a Monday morning deadline." },
+    { "id": 5, "condition": "color_black", "text_zh": "⚫煤炭黑出没。如果不是吃铁剂，请把这张截图发给医生。", "text_en": "Coal black. If you’re not on iron pills, screenshot this for your doctor – not your group chat." },
+    { "id": 6, "condition": "color_red", "text_zh": "🔴红色警报！先别发朋友圈，去看医生。", "text_en": "Red alert. Don’t post this on Slack. See a doctor." },
+    { "id": 7, "condition": "color_green+cause_other", "text_zh": "🥑绿到发光，昨天吃了多少菠菜？比你的基金还绿。", "text_en": "Glowing green. Greener than your 401k after a bad week." },
+    { "id": 8, "condition": "place_office+feel_struggle", "text_zh": "🏢带薪拉屎像打仗，你赢了，但老板以为你在会议室对方案。", "text_en": "Paid poop battle royale. You won, but your team thinks you’re in a strategy meeting." },
+    { "id": 9, "condition": "place_public+feel_stealth", "text_zh": "🚽公共厕所无声完成，你是忍者。省下的时间，够再摸鱼5分钟。", "text_en": "Ninja flush in a public restroom. You just earned 5 extra minutes of quiet quitting." },
+    { "id": 10, "condition": "place_outdoor+feel_smooth", "text_zh": "🌳野外拉屎，回归自然。比在工位被催进度舒服多了。", "text_en": "Pooping in nature. Better than another “as per my last email.”" },
+    { "id": 11, "condition": "cause_stress_sleep+feel_leftover", "text_zh": "熬夜+压力=拉不干净。身体在说：我想辞职，顺便带薪休假。", "text_en": "Burnout + no sleep = unfinished business. Your gut is drafting a resignation letter." },
+    { "id": 12, "condition": "cause_stress_sleep+type_lumpy", "text_zh": "压力大时拉的屎都是一颗颗的，像你未完成的需求清单。", "text_en": "Stress pellets. Shaped exactly like your never-ending to-do list." },
+    { "id": 13, "condition": "cause_travel", "text_zh": "✈️旅行便秘/拉稀，肠道在抗议酒店的免费早餐。出差？那是换个地方拉屎。", "text_en": "Business trip? Your gut hates the hotel breakfast. Also, you’re just pooping with extra steps." },
+    { "id": 14, "condition": "cause_spicy+type_watery", "text_zh": "🌶️昨天火锅，今天喷泉。辣得进去，辣得出来。比甲方改需求还刺激。", "text_en": "Yesterday’s hotpot, today’s fountain. Spicy in, spicy out. More intense than a last-minute client revision." },
+    { "id": 15, "condition": "cause_caffeine_alcohol+type_watery", "text_zh": "☕咖啡一喝，肠道就开运动会。比钉钉消息还快。", "text_en": "Coffee hits, gut sprints. Faster than your boss asking “got a minute?”" },
+    { "id": 16, "condition": "cause_meds+color_black", "text_zh": "💊吃药拉到黑？别怕，是铁剂在给你上色。停💊就白。", "text_en": "Black poop from meds? Just iron painting the exit. Stops when you stop – unlike your work emails." },
+    { "id": 17, "condition": "cause_meds+type_watery", "text_zh": "药效还没到病处，先到马桶。副作用：免费冲洗肠道，还不用请假。", "text_en": "Meds hit the toilet before your symptoms. Side effect: free colon cleanse, no PTO required." },
+    { "id": 18, "condition": "cause_travel+type_lumpy", "text_zh": "水土不服，屎都害羞得缩成小球。多喝水，它才能像你一样放开摸鱼。", "text_en": "Travel tummy makes poop shy. Hydrate so it can slack off like you do on Friday afternoons." },
+    { "id": 19, "condition": "cause_other", "text_zh": "不知道为啥拉成这样？别纠结，记录完继续打工。", "text_en": "No idea why? Don’t overthink. Log it and get back to the grind." },
+    { "id": 20, "condition": "feel_stealth", "text_zh": "拉完都没感觉，你失去了人生的一大乐趣——冲水前欣赏成果，就像验收项目。", "text_en": "Didn’t even feel it. You missed the joy of admiring your work – like closing a ticket without testing." },
+    { "id": 21, "condition": "feel_smooth", "text_zh": "这一拉，拉走了今日所有烦恼。建议列为带薪拉屎标杆案例。", "text_en": "That flush just washed away your whole week. Add this to your “wins” slide." },
+    { "id": 22, "condition": "feel_leftover", "text_zh": "感觉没拉完，就像周五下班前突然来的需求。明天请早。", "text_en": "Unfinished, like a Friday 4:59 PM task. Try again tomorrow (after standup)." },
+    { "id": 23, "condition": "type_ideal+feel_stealth", "text_zh": "完美的🍌香蕉君，悄悄来，悄悄走。深藏功与名，就像从不加班的同事。", "text_en": "Perfect Gold Banana, silent exit. The quiet quitting champion." },
+    { "id": 24, "condition": "default", "text_zh": "记录成功！你的每一次拉屎，都在为打工人的肠道数据做贡献。", "text_en": "Logged! Every poop you take contributes to workplace wellness data (probably)." },
+    { "id": 25, "condition": "place_transit+feel_stealth", "text_zh": "🚗在交通工具上无感拉完？你是特种兵。下车记得检查座位，别给保洁添麻烦。", "text_en": "Silent poop on the train? You’re a commuter ninja. Check the seat before you exit – don’t be that person." },
+    { "id": 26, "condition": "place_transit+feel_explosive", "text_zh": "✈️在飞机/车上喷射？愿上帝保佑你旁边的乘客，以及你的年终奖。", "text_en": "Explosive on a plane/train? God bless the passenger next to you and your next performance review." }
+  ]
+}

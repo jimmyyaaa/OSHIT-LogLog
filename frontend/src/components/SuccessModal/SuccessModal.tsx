@@ -3,40 +3,16 @@ import { useRef, useEffect, useState } from 'react'
 interface SuccessModalProps {
   open: boolean
   onClose: () => void
-  streak: number
-  todayCount: number
-  totalCount: number
+  message: string
+  emojis: string[]
 }
 
-const HEADLINES = [
-  '今天我是屎王，\n你呢？',
-  '一泻千里，\n畅快人生。',
-  '拉完了，\n世界都亮了。',
-  '论拉屎的\n自我修养。',
-  '今日已交作业，\n满分通过。',
-  '肠通则百通，\n通了！',
-  '稳如泰山，\n滑如丝绸。',
-  '认真拉屎的人，\n运气不会太差。',
-  '使命已达成，\n后会有期。',
-  '来过，留过，\n冲了。',
-]
-
-const SUBTITLES = [
-  '记录每一次，关爱自己',
-  '你的身体值得被认真对待',
-  '健康从每日记录开始',
-  '给自己一个交代',
-  '坚持就是胜利',
-]
-
-export default function SuccessModal({ open, onClose, streak, todayCount, totalCount }: SuccessModalProps) {
-  const [headline] = useState(() => HEADLINES[Math.floor(Math.random() * HEADLINES.length)])
-  const [subtitle] = useState(() => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)])
+export default function SuccessModal({ open, onClose, message, emojis }: SuccessModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!open) { setImageUrl(null); return }
+    if (!open || !message) { setImageUrl(null); return }
 
     const S = 2
     const W = 360 * S
@@ -46,6 +22,8 @@ export default function SuccessModal({ open, onClose, streak, todayCount, totalC
     canvas.height = H
     const ctx = canvas.getContext('2d')!
     const F = 'Nunito, -apple-system, "Helvetica Neue", "PingFang SC", sans-serif'
+    const EF = '-apple-system, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif'
+    const PAD = 28 * S
 
     // Background gradient
     const grad = ctx.createLinearGradient(0, 0, W, H)
@@ -56,70 +34,68 @@ export default function SuccessModal({ open, onClose, streak, todayCount, totalC
     ctx.roundRect(0, 0, W, H, 24 * S)
     ctx.fill()
 
-    // Decorative circle
+    // Decorative circles
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
     ctx.beginPath()
-    ctx.arc(W * 0.75, H * 0.25, 120 * S, 0, Math.PI * 2)
+    ctx.arc(W * 0.82, H * 0.2, 100 * S, 0, Math.PI * 2)
     ctx.fill()
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'
     ctx.beginPath()
-    ctx.arc(W * 0.2, H * 0.7, 80 * S, 0, Math.PI * 2)
+    ctx.arc(W * 0.15, H * 0.75, 80 * S, 0, Math.PI * 2)
     ctx.fill()
 
-    // Headline
+    // Title badge
+    ctx.fillStyle = 'rgba(91, 75, 0, 0.15)'
+    ctx.font = `800 ${10 * S}px ${F}`
+    ctx.fillText('LOGGED · 屎了么', PAD, 48 * S)
+
+    // Main headline - message text (word wrap)
     ctx.fillStyle = '#3d3905'
-    ctx.font = `800 ${28 * S}px ${F}`
-    const lines = headline.split('\n')
-    let y = 80 * S
-    for (const line of lines) {
-      ctx.fillText(line, 32 * S, y)
-      y += 36 * S
+    ctx.font = `900 ${22 * S}px ${F}`
+    const lineHeight = 32 * S
+    const maxLineW = W - PAD * 2
+    let line = ''
+    let y = 90 * S
+    const chars = [...message]
+    for (const char of chars) {
+      const test = line + char
+      if (ctx.measureText(test).width > maxLineW) {
+        ctx.fillText(line, PAD, y)
+        line = char
+        y += lineHeight
+      } else {
+        line = test
+      }
+    }
+    if (line) ctx.fillText(line, PAD, y)
+
+    // Emoji strip at bottom
+    if (emojis.length > 0) {
+      const stripY = H - 120 * S
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)'
+      ctx.beginPath()
+      ctx.roundRect(24 * S, stripY, W - 48 * S, 60 * S, 30 * S)
+      ctx.fill()
+
+      const emojiText = emojis.join('  |  ')
+      ctx.fillStyle = '#3d3905'
+      ctx.font = `${28 * S}px ${EF}`
+      ctx.textAlign = 'center'
+      ctx.fillText(emojiText, W / 2, stripY + 40 * S)
+      ctx.textAlign = 'start'
     }
 
-    // Subtitle
-    y += 8 * S
-    ctx.fillStyle = '#6b662f'
-    ctx.font = `500 ${13 * S}px ${F}`
-    ctx.fillText(subtitle, 32 * S, y)
-
-    // Stats area
-    const statsY = H - 160 * S
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
-    ctx.beginPath()
-    ctx.roundRect(24 * S, statsY, W - 48 * S, 100 * S, 16 * S)
-    ctx.fill()
-
-    // Stats text
-    const statsInnerY = statsY + 40 * S
-    const col1 = 56 * S
-    const col2 = W / 2 - 10 * S
-    const col3 = W - 100 * S
-
-    ctx.fillStyle = '#3d3905'
-    ctx.font = `800 ${22 * S}px ${F}`
-    ctx.textAlign = 'center'
-    ctx.fillText(`${streak}`, col1, statsInnerY)
-    ctx.fillText(`${todayCount}`, col2, statsInnerY)
-    ctx.fillText(`${totalCount}`, col3, statsInnerY)
-
-    ctx.fillStyle = '#6b662f'
-    ctx.font = `700 ${9 * S}px ${F}`
-    ctx.fillText('STREAK', col1, statsInnerY + 18 * S)
-    ctx.fillText('TODAY', col2, statsInnerY + 18 * S)
-    ctx.fillText('TOTAL', col3, statsInnerY + 18 * S)
-    ctx.textAlign = 'start'
-
     // Footer
-    ctx.fillStyle = 'rgba(61, 57, 5, 0.3)'
-    ctx.font = `600 ${10 * S}px ${F}`
+    ctx.fillStyle = 'rgba(61, 57, 5, 0.4)'
+    ctx.font = `700 ${10 * S}px ${F}`
     ctx.textAlign = 'center'
-    ctx.fillText('LogLog · Give a SHIT to Myself', W / 2, H - 24 * S)
+    ctx.fillText('屎了么 · Give a SHIT to Myself', W / 2, H - 24 * S)
     ctx.textAlign = 'start'
 
     canvasRef.current = canvas
     setImageUrl(canvas.toDataURL('image/png'))
-  }, [open, headline, subtitle, streak, todayCount, totalCount])
+  }, [open, message, emojis])
 
   if (!open) return null
 
@@ -127,7 +103,7 @@ export default function SuccessModal({ open, onClose, streak, todayCount, totalC
     if (!imageUrl) return
     const a = document.createElement('a')
     a.href = imageUrl
-    a.download = 'LogLog-记录成功.png'
+    a.download = '屎了么-记录成功.png'
     a.click()
   }
 
@@ -137,8 +113,8 @@ export default function SuccessModal({ open, onClose, streak, todayCount, totalC
       const blob = await new Promise<Blob | null>((resolve) => canvasRef.current!.toBlob(resolve, 'image/png'))
       if (!blob) return
       if (navigator.share) {
-        const file = new File([blob], 'LogLog-记录成功.png', { type: 'image/png' })
-        await navigator.share({ files: [file], title: 'LogLog' })
+        const file = new File([blob], '屎了么-记录成功.png', { type: 'image/png' })
+        await navigator.share({ files: [file], title: '屎了么' })
       } else {
         handleDownload()
       }
@@ -150,8 +126,7 @@ export default function SuccessModal({ open, onClose, streak, todayCount, totalC
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-on-surface/20 backdrop-blur-sm animate-fade-in">
       <main className="relative mx-4 flex w-full max-w-md flex-col items-center gap-6 animate-bounce-in">
-
-        {/* Shareable card preview */}
+        {/* Shareable card */}
         {imageUrl && (
           <img
             src={imageUrl}

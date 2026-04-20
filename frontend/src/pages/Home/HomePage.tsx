@@ -1,32 +1,17 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLogContext } from '../../context/LogContext'
-import type { CreateLogPayload, ShapeType } from '../../types'
+import type { CreateLogPayload } from '../../types'
 import LogSheet from '../../components/LogSheet/LogSheet'
 import RewardModal from '../../components/RewardModal/RewardModal'
 import SuccessModal from '../../components/SuccessModal/SuccessModal'
+import { SHAPES, COLORS, FEELINGS, CAUSES, PLACES, matchMessage } from '../../data/shitData'
 
-const SHAPE_LABELS: Record<ShapeType, string> = {
-  rabbit_pellets: '兔子弹',
-  twisted_rope: '麻花绳',
-  banana_bro: '香蕉君',
-  soft_serve: '软冰淇淋',
-  splash_zone: '水花区',
-}
-
-const SHAPE_ICONS: Record<ShapeType, string> = {
-  rabbit_pellets: 'grain',
-  twisted_rope: 'waves',
-  banana_bro: 'spa',
-  soft_serve: 'water_drop',
-  splash_zone: 'thunderstorm',
-}
-
-const FEELING_LABELS: Record<string, string> = {
-  effortless: '毫不费力',
-  could_have_been_more: '意犹未尽',
-  hard_won: '来之不易',
-}
+const SHAPE_MAP = Object.fromEntries(SHAPES.map((s) => [s.code, s]))
+const COLOR_MAP = Object.fromEntries(COLORS.map((c) => [c.code, c]))
+const FEELING_MAP = Object.fromEntries(FEELINGS.map((f) => [f.code, f]))
+const CAUSE_MAP = Object.fromEntries(CAUSES.map((c) => [c.code, c]))
+const PLACE_MAP = Object.fromEntries(PLACES.map((p) => [p.code, p]))
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -59,7 +44,7 @@ export default function HomePage() {
         if (s === 7) earned.push('+7 SHIT Point')
         if (s === 30) earned.push('+30 SHIT Point')
       }
-      if (payload.shape === 'banana_bro' && !entries.some((e) => e.shape === 'banana_bro')) {
+      if (payload.shape === 'type_ideal' && !entries.some((e) => e.shape === 'type_ideal')) {
         earned.push('+5 SHIT Point')
       }
       return earned
@@ -75,9 +60,34 @@ export default function HomePage() {
     return count
   }, [entries])
 
+  const [shareMessage, setShareMessage] = useState<string>('')
+  const [shareEmojis, setShareEmojis] = useState<string[]>([])
+
   const handleSubmit = useCallback(
     (payload: CreateLogPayload) => {
       const earned = computeRewards(payload)
+      const msg = matchMessage({
+        shape: payload.shape,
+        color: payload.color ?? null,
+        feeling: payload.feeling ?? null,
+        causes: payload.contributingFactors ?? [],
+        place: payload.location ?? null,
+      })
+      setShareMessage(msg)
+
+      // Collect emojis from selected options
+      const emojis: string[] = []
+      if (SHAPE_MAP[payload.shape]) emojis.push(SHAPE_MAP[payload.shape].icon)
+      if (payload.color && COLOR_MAP[payload.color]) emojis.push(COLOR_MAP[payload.color].icon)
+      if (payload.feeling && FEELING_MAP[payload.feeling]) emojis.push(FEELING_MAP[payload.feeling].icon)
+      if (payload.contributingFactors) {
+        for (const c of payload.contributingFactors) {
+          if (CAUSE_MAP[c]) emojis.push(CAUSE_MAP[c].icon)
+        }
+      }
+      if (payload.location && PLACE_MAP[payload.location]) emojis.push(PLACE_MAP[payload.location].icon)
+      setShareEmojis(emojis)
+
       addEntry(payload)
       setSheetOpen(false)
       setSuccessOpen(true)
@@ -92,100 +102,226 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-t from-primary-container/40 via-surface-container-low to-surface font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
-      {/* Top App Bar */}
-      <header className="shrink-0 flex w-full items-center justify-between rounded-b-large bg-surface/70 px-8 py-4 shadow-[0_12px_32px_rgba(61,57,5,0.06)] backdrop-blur-3xl">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/profile')}
-            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-surface-container-high active:scale-95 transition-transform"
-          >
-            <span className="material-symbols-outlined text-on-surface-variant text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-              person
-            </span>
-          </button>
-          <span className="text-2xl font-bold tracking-tight text-on-surface font-display">LogLog</span>
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col bg-gradient-to-t from-primary-container/40 via-surface-container-low to-surface font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
+      {/* Background Radial Glow */}
+      <div className="pointer-events-none fixed left-1/2 top-1/3 -z-10 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-fixed/20 blur-[120px]" />
 
-      {/* Main Canvas */}
-      <main className="flex flex-grow flex-col items-center justify-center px-6 pb-8 relative mx-auto w-full max-w-7xl">
-        {/* Background Radial Glow */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-fixed/20 blur-[120px]" />
+      {/* Top bar: title + profile */}
+      <div className="shrink-0 flex items-center justify-between px-7 pt-12 pb-2">
+        <h1 className="font-display text-3xl font-black tracking-tight text-on-surface">屎了么</h1>
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-high active:scale-95 transition-transform"
+        >
+          <span className="material-symbols-outlined text-on-surface-variant text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+            person
+          </span>
+        </button>
+      </div>
 
-        {/* Tagline */}
-        <div className="mb-12 text-center">
-          <h1 className="font-display text-5xl font-black leading-tight tracking-tighter text-on-surface md:text-6xl">
-            Give a <span className="text-primary">SHIT</span> to Myself
-          </h1>
-        </div>
+      {/* Intro text */}
+      <div className="shrink-0 px-7 pb-6 pt-2">
+        <p className="text-base leading-relaxed text-on-surface-variant">
+          每日一拉，健康到家！
+          <br />
+          记录你的光辉时刻，分享到朋友圈，让我们一起<span className="font-bold text-primary">SHIT</span>出一个更美好的世界！
+        </p>
+      </div>
 
-        {/* Center Action: Record Button */}
-        <div className="group relative mb-16 cursor-pointer">
-          <div className="absolute inset-0 scale-110 rounded-full bg-primary-container/40 blur-[40px] transition-transform duration-500 group-hover:scale-125" />
-          <button
-            onClick={() => setSheetOpen(true)}
-            className="relative flex h-48 w-48 flex-col items-center justify-center rounded-full border-4 border-white/30 bg-primary-container shadow-[inset_0_4px_12px_rgba(0,0,0,0.05),0_20px_40px_rgba(255,215,9,0.3)] transition-all duration-300 hover:scale-105 active:scale-95 md:h-56 md:w-56"
-          >
-            <span className="material-symbols-outlined mb-2 text-6xl font-light text-on-primary-container">add</span>
-            <span className="font-display text-xl font-extrabold tracking-wider text-on-primary-container">RECORD</span>
-          </button>
-        </div>
+      {/* Main content area */}
+      <main className="flex flex-1 flex-col items-center px-6">
+        {/* Toilet + Flush Button */}
+        <ToiletButton onClick={() => setSheetOpen(true)} />
 
-        {/* Bottom Layout: Bento Style */}
-        <div className="grid w-full max-w-5xl grid-cols-1 gap-8 md:grid-cols-12">
-          {/* Recent Records */}
-          <section className="rounded-[2.5rem] bg-white/70 p-8 shadow-[0_16px_48px_rgba(61,57,5,0.1)] backdrop-blur-3xl md:col-span-5">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold text-on-surface">Recent Flow</h2>
-              <span className="rounded-full bg-primary-container/20 px-3 py-1 text-sm font-bold text-primary">Today</span>
+        {/* Today's records */}
+        <section className="w-full max-w-lg rounded-[2.5rem] bg-white/70 p-7 shadow-[0_16px_48px_rgba(61,57,5,0.1)] backdrop-blur-3xl">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold text-on-surface">今日记录</h2>
+            <span className="rounded-full bg-primary-container/20 px-3 py-1 text-xs font-bold text-primary">Today</span>
+          </div>
+
+          {todayEntries.length === 0 ? (
+            <div className="rounded-2xl bg-surface-container-low p-6 text-center">
+              <p className="text-sm text-on-surface-variant">今天还没有记录</p>
             </div>
-
-            {todayEntries.length === 0 ? (
-              <div className="rounded-2xl bg-surface-container-low p-6 text-center">
-                <p className="text-sm text-on-surface-variant">今天还没有记录</p>
-              </div>
-            ) : (
-              <div className="max-h-[180px] space-y-4 overflow-y-auto">
-                {todayEntries.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="group flex cursor-pointer items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high"
-                  >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-container/30">
-                      <span className="material-symbols-outlined text-primary">
-                        {SHAPE_ICONS[entry.shape] || 'circle'}
-                      </span>
-                    </div>
-                    <div className="min-w-0 flex-grow">
-                      <h4 className="font-bold text-on-surface">{SHAPE_LABELS[entry.shape]}</h4>
-                      <p className="text-sm text-on-surface-variant">
-                        {formatTime(entry.timestamp)}
-                        {entry.feeling ? ` · ${FEELING_LABELS[entry.feeling]}` : ''}
-                      </p>
-                    </div>
-                    <span className="material-symbols-outlined text-outline-variant opacity-0 transition-opacity group-hover:opacity-100">
-                      chevron_right
-                    </span>
+          ) : (
+            <div className="max-h-[200px] space-y-3 overflow-y-auto">
+              {todayEntries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="group flex items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-container/30 text-2xl">
+                    {SHAPE_MAP[entry.shape]?.icon || '💩'}
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-        </div>
+                  <div className="min-w-0 flex-grow">
+                    <h4 className="font-bold text-on-surface">{SHAPE_MAP[entry.shape]?.name || entry.shape}</h4>
+                    <p className="text-sm text-on-surface-variant">
+                      {formatTime(entry.timestamp)}
+                      {entry.feeling ? ` · ${FEELING_MAP[entry.feeling]?.name || ''}` : ''}
+                    </p>
+                  </div>
+                  <span className="material-symbols-outlined text-outline-variant opacity-0 transition-opacity group-hover:opacity-100">
+                    chevron_right
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="shrink-0 py-6 text-center">
+        <p className="text-[11px] font-medium tracking-wider text-on-surface-variant/40">
+          &copy; 2026 All Shit Reserved.
+        </p>
+      </footer>
 
       <LogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} onSubmit={handleSubmit} />
       <SuccessModal
         open={successOpen}
         onClose={() => setSuccessOpen(false)}
-        streak={streak}
-        todayCount={todayEntries.length}
-        totalCount={entries.length}
+        message={shareMessage}
+        emojis={shareEmojis}
       />
       <RewardModal rewards={rewards} currentIndex={rewardIndex} onDismiss={() => setRewardIndex((i) => i + 1)} />
     </div>
   )
 }
 
+/* ---- Toilet Flush Button ---- */
+
+function ToiletButton({ onClick }: { onClick: () => void }) {
+  const [flushing, setFlushing] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleFlush = () => {
+    if (flushing) return
+    setFlushing(true)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      setFlushing(false)
+      onClick()
+    }, 900)
+  }
+
+  return (
+    <div className="relative mb-8 flex flex-col items-center">
+      {/* Glow behind toilet */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-container/30 blur-[50px]" />
+
+      <svg width="220" height="260" viewBox="0 0 220 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Tank shadow */}
+        <ellipse cx="110" cy="248" rx="70" ry="8" fill="rgba(61,57,5,0.06)" />
+
+        {/* Tank body */}
+        <rect x="65" y="10" width="90" height="70" rx="16" fill="#fffae1" stroke="#efc900" strokeWidth="2.5" />
+        {/* Tank lid */}
+        <rect x="58" y="4" width="104" height="18" rx="9" fill="#ffd709" stroke="#efc900" strokeWidth="2" />
+
+        {/* Pipe connecting tank to bowl */}
+        <rect x="100" y="78" width="20" height="20" rx="4" fill="#fffae1" stroke="#efc900" strokeWidth="2" />
+
+        {/* Bowl back (wider part) */}
+        <path
+          d="M 40 100 Q 40 96, 46 96 L 174 96 Q 180 96, 180 100 L 180 140 Q 180 180, 140 195 L 80 195 Q 40 180, 40 140 Z"
+          fill="#fffae1"
+          stroke="#efc900"
+          strokeWidth="2.5"
+        />
+
+        {/* Bowl seat ring */}
+        <ellipse cx="110" cy="148" rx="60" ry="42" fill="white" stroke="#efc900" strokeWidth="2.5" />
+
+        {/* Water in bowl */}
+        <ellipse
+          cx="110"
+          cy="150"
+          rx="45"
+          ry="30"
+          fill="#e8f4fd"
+          className={flushing ? 'animate-[flush-spin_0.8s_ease-in-out]' : ''}
+        />
+
+        {/* Water swirl when flushing */}
+        {flushing && (
+          <g className="animate-[flush-spin_0.8s_ease-in-out] origin-center" style={{ transformOrigin: '110px 150px' }}>
+            <path
+              d="M 95 140 Q 110 135, 120 145 Q 130 155, 115 160 Q 100 165, 95 155 Q 90 145, 95 140"
+              fill="none"
+              stroke="#93c5fd"
+              strokeWidth="2"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
+            <path
+              d="M 105 138 Q 118 142, 122 152 Q 126 162, 112 163"
+              fill="none"
+              stroke="#60a5fa"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              opacity="0.5"
+            />
+          </g>
+        )}
+
+        {/* Bowl base */}
+        <path
+          d="M 75 192 Q 75 220, 90 230 L 130 230 Q 145 220, 145 192"
+          fill="#fffae1"
+          stroke="#efc900"
+          strokeWidth="2.5"
+        />
+        {/* Base bottom */}
+        <rect x="80" y="226" width="60" height="14" rx="7" fill="#fffae1" stroke="#efc900" strokeWidth="2" />
+
+        {/* Flush button on tank */}
+        <g
+          onClick={handleFlush}
+          className="cursor-pointer"
+          role="button"
+          tabIndex={0}
+        >
+          {/* Button shadow */}
+          <ellipse cx="110" cy="36" rx="18" ry="4" fill="rgba(91,75,0,0.1)" />
+          {/* Button body */}
+          <circle
+            cx="110"
+            cy="32"
+            r="16"
+            fill="url(#flush-gradient)"
+            stroke="#efc900"
+            strokeWidth="2"
+            className={`transition-transform duration-150 ${flushing ? 'translate-y-[3px]' : 'hover:-translate-y-[1px]'}`}
+          />
+          {/* Button icon */}
+          <text
+            x="110"
+            y="37"
+            textAnchor="middle"
+            fill="#5b4b00"
+            fontSize="14"
+            fontWeight="800"
+            fontFamily="Nunito, sans-serif"
+          >
+            冲
+          </text>
+        </g>
+
+        {/* Gradient defs */}
+        <defs>
+          <radialGradient id="flush-gradient" cx="0.4" cy="0.3" r="0.7">
+            <stop offset="0%" stopColor="#ffd709" />
+            <stop offset="100%" stopColor="#efc900" />
+          </radialGradient>
+        </defs>
+      </svg>
+
+      {/* Label */}
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/50">
+        {flushing ? '冲水中...' : '按下冲水按钮开始记录'}
+      </p>
+    </div>
+  )
+}

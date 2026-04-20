@@ -1,28 +1,38 @@
 export type ShapeType =
-  | 'rabbit_pellets'
-  | 'twisted_rope'
-  | 'banana_bro'
-  | 'soft_serve'
-  | 'splash_zone'
+  | 'type_lumpy'
+  | 'type_ideal'
+  | 'type_mushy'
+  | 'type_watery'
 
 export type ColorType =
-  | 'golden_standard'
-  | 'dark_roast'
-  | 'clay_warning'
+  | 'color_brown'
+  | 'color_yellow'
+  | 'color_green'
+  | 'color_black'
+  | 'color_red'
 
 export type FeelingType =
-  | 'effortless'
-  | 'could_have_been_more'
-  | 'hard_won'
+  | 'feel_smooth'
+  | 'feel_leftover'
+  | 'feel_struggle'
+  | 'feel_explosive'
+  | 'feel_stealth'
+
+export type CauseType =
+  | 'cause_spicy'
+  | 'cause_caffeine_alcohol'
+  | 'cause_stress_sleep'
+  | 'cause_meds'
+  | 'cause_travel'
+  | 'cause_other'
 
 export type LocationType =
-  | 'home'
-  | 'office'
-  | 'school'
-  | 'outdoors'
-  | 'car'
-  | 'plane'
-  | 'boat'
+  | 'place_home'
+  | 'place_office'
+  | 'place_public'
+  | 'place_mall'
+  | 'place_transit'
+  | 'place_outdoor'
 
 export interface LogEntry {
   id: string
@@ -31,7 +41,7 @@ export interface LogEntry {
   shape: ShapeType
   color?: ColorType
   feeling?: FeelingType
-  contributingFactors?: string[]
+  contributingFactors?: CauseType[]
   location?: LocationType
 }
 
@@ -39,7 +49,7 @@ export interface CreateLogPayload {
   shape: ShapeType
   color?: ColorType
   feeling?: FeelingType
-  contributingFactors?: string[]
+  contributingFactors?: CauseType[]
   location?: LocationType
 }
 
