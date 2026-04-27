@@ -5,13 +5,10 @@ import type { CreateLogPayload } from '../../types'
 import LogSheet from '../../components/LogSheet/LogSheet'
 import RewardModal from '../../components/RewardModal/RewardModal'
 import SuccessModal from '../../components/SuccessModal/SuccessModal'
-import { SHAPES, COLORS, FEELINGS, CAUSES, PLACES, matchMessage } from '../../data/shitData'
+import { SHAPES, FEELINGS } from '../../data/shitData'
 
 const SHAPE_MAP = Object.fromEntries(SHAPES.map((s) => [s.code, s]))
-const COLOR_MAP = Object.fromEntries(COLORS.map((c) => [c.code, c]))
 const FEELING_MAP = Object.fromEntries(FEELINGS.map((f) => [f.code, f]))
-const CAUSE_MAP = Object.fromEntries(CAUSES.map((c) => [c.code, c]))
-const PLACE_MAP = Object.fromEntries(PLACES.map((p) => [p.code, p]))
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -52,42 +49,12 @@ export default function HomePage() {
     [entries, today]
   )
 
-  const streak = useMemo(() => {
-    let count = 0
-    const d = new Date()
-    const dates = new Set(entries.map((e) => new Date(e.timestamp).toISOString().slice(0, 10)))
-    while (dates.has(d.toISOString().slice(0, 10))) { count++; d.setDate(d.getDate() - 1) }
-    return count
-  }, [entries])
-
-  const [shareMessage, setShareMessage] = useState<string>('')
-  const [shareEmojis, setShareEmojis] = useState<string[]>([])
+  const [lastPayload, setLastPayload] = useState<CreateLogPayload | null>(null)
 
   const handleSubmit = useCallback(
     (payload: CreateLogPayload) => {
       const earned = computeRewards(payload)
-      const msg = matchMessage({
-        shape: payload.shape,
-        color: payload.color ?? null,
-        feeling: payload.feeling ?? null,
-        causes: payload.contributingFactors ?? [],
-        place: payload.location ?? null,
-      })
-      setShareMessage(msg)
-
-      // Collect emojis from selected options
-      const emojis: string[] = []
-      if (SHAPE_MAP[payload.shape]) emojis.push(SHAPE_MAP[payload.shape].icon)
-      if (payload.color && COLOR_MAP[payload.color]) emojis.push(COLOR_MAP[payload.color].icon)
-      if (payload.feeling && FEELING_MAP[payload.feeling]) emojis.push(FEELING_MAP[payload.feeling].icon)
-      if (payload.contributingFactors) {
-        for (const c of payload.contributingFactors) {
-          if (CAUSE_MAP[c]) emojis.push(CAUSE_MAP[c].icon)
-        }
-      }
-      if (payload.location && PLACE_MAP[payload.location]) emojis.push(PLACE_MAP[payload.location].icon)
-      setShareEmojis(emojis)
-
+      setLastPayload(payload)
       addEntry(payload)
       setSheetOpen(false)
       setSuccessOpen(true)
@@ -182,8 +149,7 @@ export default function HomePage() {
       <SuccessModal
         open={successOpen}
         onClose={() => setSuccessOpen(false)}
-        message={shareMessage}
-        emojis={shareEmojis}
+        payload={lastPayload}
       />
       <RewardModal rewards={rewards} currentIndex={rewardIndex} onDismiss={() => setRewardIndex((i) => i + 1)} />
     </div>
