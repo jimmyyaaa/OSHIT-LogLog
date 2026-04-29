@@ -14,7 +14,7 @@ import com.oshit.loglog.points.PointsClaimService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/points")
+@RequestMapping("/points")
 public class PointsController {
 
     private final PointsClaimService pointsClaimService;

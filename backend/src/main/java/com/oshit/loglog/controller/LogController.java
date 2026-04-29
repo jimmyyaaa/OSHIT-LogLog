@@ -23,7 +23,7 @@ import com.oshit.loglog.service.LogService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/logs")
+@RequestMapping("/logs")
 public class LogController {
 
     private final LogService logService;
