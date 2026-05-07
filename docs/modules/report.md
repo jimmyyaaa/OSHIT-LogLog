@@ -16,7 +16,7 @@ User taps "生成周报" on the Profile page. Generation is on-demand, not autom
 
 ## Data Inputs
 
-All sourced from the server via `GET /api/logs`. Covers the previous week (Monday to Sunday).
+All sourced from the server via `GET /logs`. Covers the previous week (Monday to Sunday).
 
 | Input | Description |
 |-------|-------------|
