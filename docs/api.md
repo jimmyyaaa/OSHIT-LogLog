@@ -6,11 +6,16 @@
 
 The backend provides two groups of endpoints: log entry CRUD and SHIT Points claim relay. All log data is stored in a server-local database. Points computation happens on the frontend; the backend only handles the claim relay to the external points module.
 
+Base URLs:
+
+- Development: `http://localhost:8080`
+- Production: `https://oshit.io/log-log/api/v1`
+
 ---
 
 ## Log Entries
 
-### `POST /api/logs`
+### `POST /logs`
 
 Create a new log entry.
 
@@ -43,7 +48,7 @@ Create a new log entry.
 
 ---
 
-### `GET /api/logs`
+### `GET /logs`
 
 Fetch log entries for the current user within a date range.
 
@@ -80,7 +85,7 @@ Fetch log entries for the current user within a date range.
 
 ## SHIT Points
 
-### `POST /api/points/claim`
+### `POST /points/claim`
 
 Claim accumulated SHIT Points. The backend validates and relays the request to the external points module.
 

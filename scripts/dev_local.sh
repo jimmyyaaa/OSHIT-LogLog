@@ -19,13 +19,22 @@ BACKEND_PID=$!
 
 # Wait for backend to be ready
 echo "[backend] 等待后端启动..."
+BACKEND_READY=0
 for i in $(seq 1 30); do
-  if curl -s -o /dev/null http://localhost:8080/api/logs?from=2000-01-01\&to=2000-01-02 2>/dev/null; then
+  if curl -fsS -o /dev/null http://localhost:8080/logs?from=2000-01-01\&to=2000-01-02 2>/dev/null; then
     echo "[backend] 已就绪 http://localhost:8080"
+    BACKEND_READY=1
     break
   fi
   sleep 1
 done
+
+if [ "$BACKEND_READY" -ne 1 ]; then
+  echo "[backend] 启动失败或 30 秒内未就绪，停止。"
+  kill $BACKEND_PID 2>/dev/null
+  wait $BACKEND_PID 2>/dev/null
+  exit 1
+fi
 
 # Start frontend
 echo "[frontend] 启动 Vite..."

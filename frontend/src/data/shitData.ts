@@ -1,10 +1,10 @@
 import type { ShapeType, ColorType, FeelingType, CauseType, LocationType } from '../types'
 
-export const SHAPES: { code: ShapeType; icon: string; name: string; desc: string; letter: string }[] = [
-  { code: 'type_lumpy', icon: '🐑', name: '羊粪蛋小队', desc: '独立颗粒，有点干涩', letter: 'L' },
-  { code: 'type_ideal', icon: '🍌', name: '黄金香蕉君', desc: '光滑柔软，标准优等生', letter: 'B' },
-  { code: 'type_mushy', icon: '🥣', name: '糊糊怪', desc: '松软糊状，边界模糊', letter: 'M' },
-  { code: 'type_watery', icon: '💧', name: '水枪喷射', desc: '液态状，一泻千里', letter: 'W' },
+export const SHAPES: { code: ShapeType; icon: string; image: string; name: string; desc: string; letter: string }[] = [
+  { code: 'type_lumpy', icon: '🐑', image: '/羊粪蛋.png', name: '羊粪蛋小队', desc: '独立颗粒，有点干涩', letter: 'L' },
+  { code: 'type_ideal', icon: '🍌', image: '/香蕉君.png', name: '黄金香蕉君', desc: '光滑柔软，标准优等生', letter: 'B' },
+  { code: 'type_mushy', icon: '🥣', image: '/糊糊怪.png', name: '糊糊怪', desc: '松软糊状，边界模糊', letter: 'M' },
+  { code: 'type_watery', icon: '💧', image: '/水枪.png', name: '水枪喷射', desc: '液态状，一泻千里', letter: 'W' },
 ]
 
 export const COLORS: { code: ColorType; icon: string; hex: string; name: string; healthNote: string; letter: string }[] = [

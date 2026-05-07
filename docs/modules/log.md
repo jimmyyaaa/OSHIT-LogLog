@@ -14,7 +14,7 @@ All user-facing text is in Chinese (Simplified).
 2. Log sheet slides up (bottom sheet)
 3. User selects shape (required), and optionally: color, feeling, contributing factors, location
 4. User taps submit
-5. Entry is saved to the server database via `POST /api/logs`
+5. Entry is saved to the server database via `POST /logs`
 6. A random feedback line is shown based on the logged shape
 7. Sheet closes, home button updates to post-log state
 8. Frontend computes SHIT Points rewards and shows reward modals sequentially

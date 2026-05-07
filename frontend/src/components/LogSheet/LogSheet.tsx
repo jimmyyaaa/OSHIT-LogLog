@@ -5,7 +5,7 @@ import { SHAPES, COLORS, FEELINGS, CAUSES, PLACES } from '../../data/shitData'
 interface LogSheetProps {
   open: boolean
   onClose: () => void
-  onSubmit: (payload: CreateLogPayload) => void
+  onSubmit: (payload: CreateLogPayload) => void | Promise<void>
 }
 
 const GOLD = '#ffd709'
@@ -22,7 +22,7 @@ interface StepDef {
   subtitle: string
   required: boolean
   layout: 'grid2' | 'colorBlob' | 'scatter'
-  options: Array<{ code: string; icon?: string; name: string; hex?: string; desc?: string }>
+  options: Array<{ code: string; icon?: string; image?: string; name: string; hex?: string; desc?: string }>
   multi?: boolean
 }
 
@@ -33,7 +33,7 @@ const STEPS: StepDef[] = [
     subtitle: '选一个最像的',
     required: true,
     layout: 'grid2',
-    options: SHAPES.map((s) => ({ code: s.code, icon: s.icon, name: s.name, desc: s.desc })),
+    options: SHAPES.map((s) => ({ code: s.code, icon: s.icon, image: s.image, name: s.name, desc: s.desc })),
   },
   {
     key: 'color',
@@ -86,6 +86,8 @@ export default function LogSheet({ open, onClose, onSubmit }: LogSheetProps) {
   const [selections, setSelections] = useState<Selections>(initialSelections)
   const [animKey, setAnimKey] = useState(0)
   const [direction, setDirection] = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) {
@@ -93,6 +95,8 @@ export default function LogSheet({ open, onClose, onSubmit }: LogSheetProps) {
       setSelections(initialSelections)
       setAnimKey(0)
       setDirection(1)
+      setSubmitting(false)
+      setSubmitError(null)
     }
   }, [open])
 
@@ -119,17 +123,28 @@ export default function LogSheet({ open, onClose, onSubmit }: LogSheetProps) {
   const hasSelection = currentStep.key === 'causes'
     ? selections.causes.length > 0
     : !!selections[currentStep.key]
+  const canContinue = currentStep.required ? hasSelection : true
 
-  const goNext = () => {
+  const goNext = async () => {
+    if (submitting || !canContinue) return
+    setSubmitError(null)
     if (isLast) {
       if (!selections.shape) return
-      onSubmit({
-        shape: selections.shape,
-        color: selections.color ?? undefined,
-        feeling: selections.feeling ?? undefined,
-        contributingFactors: selections.causes.length ? selections.causes : undefined,
-        location: selections.location ?? undefined,
-      })
+      setSubmitting(true)
+      try {
+        await onSubmit({
+          shape: selections.shape,
+          color: selections.color ?? undefined,
+          feeling: selections.feeling ?? undefined,
+          contributingFactors: selections.causes.length ? selections.causes : undefined,
+          location: selections.location ?? undefined,
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '请确认后端已启动后重试'
+        setSubmitError(`记录失败：${message}`)
+      } finally {
+        setSubmitting(false)
+      }
     } else {
       setDirection(1)
       setAnimKey((k) => k + 1)
@@ -148,7 +163,7 @@ export default function LogSheet({ open, onClose, onSubmit }: LogSheetProps) {
   }
 
   const skipStep = () => {
-    if (!currentStep.required) {
+    if (!currentStep.required && !submitting) {
       setDirection(1)
       setAnimKey((k) => k + 1)
       if (!isLast) setStep((s) => s + 1)
@@ -239,21 +254,26 @@ export default function LogSheet({ open, onClose, onSubmit }: LogSheetProps) {
 
         {/* Bottom action */}
         <div className="relative z-10 shrink-0 px-6 pb-[calc(env(safe-area-inset-bottom)+1.75rem)]">
+          {submitError && (
+            <p className="mb-3 text-center text-xs font-extrabold" style={{ color: '#b3261e' }}>
+              {submitError}
+            </p>
+          )}
           <button
-            onClick={hasSelection ? goNext : undefined}
-            disabled={!hasSelection}
+            onClick={canContinue ? goNext : undefined}
+            disabled={!canContinue || submitting}
             className="h-14 w-full rounded-full text-base font-black tracking-wide backdrop-blur-sm transition-all"
             style={{
-              background: hasSelection
+              background: canContinue
                 ? `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_DEEP} 100%)`
                 : 'rgba(255,255,255,0.5)',
-              color: hasSelection ? ON_GOLD : 'rgba(91,75,0,0.35)',
-              boxShadow: hasSelection ? `0 12px 28px ${GOLD}55` : 'none',
+              color: canContinue ? ON_GOLD : 'rgba(91,75,0,0.35)',
+              boxShadow: canContinue ? `0 12px 28px ${GOLD}55` : 'none',
               border: 'none',
-              cursor: hasSelection ? 'pointer' : 'default',
+              cursor: canContinue && !submitting ? 'pointer' : 'default',
             }}
           >
-            {isLast ? '提交记录 🎉' : hasSelection ? '下一步 →' : '请选择'}
+            {submitting ? '提交中...' : isLast ? '提交记录 🎉' : hasSelection ? '下一步 →' : currentStep.required ? '请选择' : '跳过 →'}
           </button>
         </div>
 
@@ -325,9 +345,18 @@ function ShapeGrid({ options, selected, onSelect }: { options: StepDef['options'
               cursor: 'pointer',
             }}
           >
-            <span className="text-[56px] leading-none" style={{ filter: sel ? 'none' : 'saturate(0.85)' }}>
-              {opt.icon}
-            </span>
+            {opt.image ? (
+              <img
+                src={opt.image}
+                alt={opt.name}
+                className="h-20 w-20 object-contain transition-transform duration-300"
+                style={{ filter: sel ? 'none' : 'saturate(0.9)', transform: sel ? 'scale(1.08)' : 'scale(1)' }}
+              />
+            ) : (
+              <span className="text-[56px] leading-none" style={{ filter: sel ? 'none' : 'saturate(0.85)' }}>
+                {opt.icon}
+              </span>
+            )}
             <span className="text-base font-extrabold" style={{ color: INK }}>{opt.name}</span>
             {opt.desc && (
               <span className="text-center text-[11px] leading-tight" style={{ color: ON_GOLD, opacity: 0.7 }}>

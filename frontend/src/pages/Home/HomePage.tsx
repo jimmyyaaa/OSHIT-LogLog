@@ -52,10 +52,10 @@ export default function HomePage() {
   const [lastPayload, setLastPayload] = useState<CreateLogPayload | null>(null)
 
   const handleSubmit = useCallback(
-    (payload: CreateLogPayload) => {
+    async (payload: CreateLogPayload) => {
       const earned = computeRewards(payload)
+      await addEntry(payload)
       setLastPayload(payload)
-      addEntry(payload)
       setSheetOpen(false)
       setSuccessOpen(true)
       if (earned.length > 0) { setRewards(earned); setRewardIndex(0) }
@@ -118,8 +118,16 @@ export default function HomePage() {
                   key={entry.id}
                   className="group flex items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high"
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-container/30 text-2xl">
-                    {SHAPE_MAP[entry.shape]?.icon || '💩'}
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-container/30 p-1.5 text-2xl">
+                    {SHAPE_MAP[entry.shape]?.image ? (
+                      <img
+                        src={SHAPE_MAP[entry.shape].image}
+                        alt={SHAPE_MAP[entry.shape]?.name || entry.shape}
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      SHAPE_MAP[entry.shape]?.icon || '💩'
+                    )}
                   </div>
                   <div className="min-w-0 flex-grow">
                     <h4 className="font-bold text-on-surface">{SHAPE_MAP[entry.shape]?.name || entry.shape}</h4>
@@ -177,112 +185,23 @@ function ToiletButton({ onClick }: { onClick: () => void }) {
       {/* Glow behind toilet */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-container/30 blur-[50px]" />
 
-      <svg width="220" height="260" viewBox="0 0 220 260" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Tank shadow */}
-        <ellipse cx="110" cy="248" rx="70" ry="8" fill="rgba(61,57,5,0.06)" />
-
-        {/* Tank body */}
-        <rect x="65" y="10" width="90" height="70" rx="16" fill="#fffae1" stroke="#efc900" strokeWidth="2.5" />
-        {/* Tank lid */}
-        <rect x="58" y="4" width="104" height="18" rx="9" fill="#ffd709" stroke="#efc900" strokeWidth="2" />
-
-        {/* Pipe connecting tank to bowl */}
-        <rect x="100" y="78" width="20" height="20" rx="4" fill="#fffae1" stroke="#efc900" strokeWidth="2" />
-
-        {/* Bowl back (wider part) */}
-        <path
-          d="M 40 100 Q 40 96, 46 96 L 174 96 Q 180 96, 180 100 L 180 140 Q 180 180, 140 195 L 80 195 Q 40 180, 40 140 Z"
-          fill="#fffae1"
-          stroke="#efc900"
-          strokeWidth="2.5"
+      <button
+        onClick={handleFlush}
+        disabled={flushing}
+        className="group relative flex h-[260px] w-[220px] items-center justify-center transition-transform duration-200 active:scale-95 disabled:cursor-wait"
+        aria-label="按下冲水按钮开始记录"
+      >
+        <img
+          src="/马桶.png"
+          alt=""
+          className={`h-full w-full object-contain drop-shadow-[0_18px_18px_rgba(61,57,5,0.08)] transition-transform duration-300 ${
+            flushing ? 'scale-95 rotate-1' : 'group-hover:-translate-y-1'
+          }`}
         />
-
-        {/* Bowl seat ring */}
-        <ellipse cx="110" cy="148" rx="60" ry="42" fill="white" stroke="#efc900" strokeWidth="2.5" />
-
-        {/* Water in bowl */}
-        <ellipse
-          cx="110"
-          cy="150"
-          rx="45"
-          ry="30"
-          fill="#e8f4fd"
-          className={flushing ? 'animate-[flush-spin_0.8s_ease-in-out]' : ''}
-        />
-
-        {/* Water swirl when flushing */}
         {flushing && (
-          <g className="animate-[flush-spin_0.8s_ease-in-out] origin-center" style={{ transformOrigin: '110px 150px' }}>
-            <path
-              d="M 95 140 Q 110 135, 120 145 Q 130 155, 115 160 Q 100 165, 95 155 Q 90 145, 95 140"
-              fill="none"
-              stroke="#93c5fd"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-            <path
-              d="M 105 138 Q 118 142, 122 152 Q 126 162, 112 163"
-              fill="none"
-              stroke="#60a5fa"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.5"
-            />
-          </g>
+          <span className="pointer-events-none absolute left-1/2 top-[56%] h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-sky-200/80 border-t-sky-400/90 animate-spin" />
         )}
-
-        {/* Bowl base */}
-        <path
-          d="M 75 192 Q 75 220, 90 230 L 130 230 Q 145 220, 145 192"
-          fill="#fffae1"
-          stroke="#efc900"
-          strokeWidth="2.5"
-        />
-        {/* Base bottom */}
-        <rect x="80" y="226" width="60" height="14" rx="7" fill="#fffae1" stroke="#efc900" strokeWidth="2" />
-
-        {/* Flush button on tank */}
-        <g
-          onClick={handleFlush}
-          className="cursor-pointer"
-          role="button"
-          tabIndex={0}
-        >
-          {/* Button shadow */}
-          <ellipse cx="110" cy="36" rx="18" ry="4" fill="rgba(91,75,0,0.1)" />
-          {/* Button body */}
-          <circle
-            cx="110"
-            cy="32"
-            r="16"
-            fill="url(#flush-gradient)"
-            stroke="#efc900"
-            strokeWidth="2"
-            className={`transition-transform duration-150 ${flushing ? 'translate-y-[3px]' : 'hover:-translate-y-[1px]'}`}
-          />
-          {/* Button icon */}
-          <text
-            x="110"
-            y="37"
-            textAnchor="middle"
-            fill="#5b4b00"
-            fontSize="14"
-            fontWeight="800"
-            fontFamily="Nunito, sans-serif"
-          >
-            冲
-          </text>
-        </g>
-
-        {/* Gradient defs */}
-        <defs>
-          <radialGradient id="flush-gradient" cx="0.4" cy="0.3" r="0.7">
-            <stop offset="0%" stopColor="#ffd709" />
-            <stop offset="100%" stopColor="#efc900" />
-          </radialGradient>
-        </defs>
-      </svg>
+      </button>
 
       {/* Label */}
       <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/50">

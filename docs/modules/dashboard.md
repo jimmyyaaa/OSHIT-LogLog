@@ -10,7 +10,7 @@ All user-facing text is in Chinese (Simplified).
 
 ## Metrics
 
-All three metrics are computed on the frontend from entries fetched via `GET /api/logs`.
+All three metrics are computed on the frontend from entries fetched via `GET /logs`.
 
 Week is defined as Monday 00:00 to Sunday 23:59.
 
